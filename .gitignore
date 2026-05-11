@@ -1,0 +1,51 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# IntelliJ / Android Studio IDE
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code IDE
+.vscode/
+
+# Flutter/Dart specific
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/ios/Flutter/.last_build_id
+/ios/Flutter/App.framework
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/app.flx
+/ios/Flutter/app.zip
+/ios/Flutter/flutter_assets/
+/ios/Flutter/flutter_export_environment.sh
+/ios/Pods/
+/android/app/src/main/assets/flutter_assets/
+/android/app/build/
+/android/app/src/main/jniLibs/
+/android/app/src/main/obj/
+/android/app/src/main/libs/
+
+# Crashlytics generated file
+crashlytics-build.properties
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+*.env
+keys/
+key.properties
