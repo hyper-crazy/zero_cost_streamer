@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../models/content.dart';
+import '../utils/constants.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Content content;
@@ -34,8 +35,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _setLandscape();
 
     final String videoUrl = widget.season != null
-        ? 'https://vidsrc.to/embed/tv/${widget.content.id}/${widget.season}/${widget.episode}'
-        : 'https://vidsrc.to/embed/movie/${widget.content.id}';
+        ? '${AppConstants.vidsrcBaseUrl}/embed/tv/${widget.content.id}/${widget.season}/${widget.episode}'
+        : '${AppConstants.vidsrcBaseUrl}/embed/movie/${widget.content.id}';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -44,7 +45,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
-            if (request.url.contains('vidsrc.to') ||
+            if (request.url.contains(AppConstants.vidsrcBaseUrl.replaceAll('https://', '')) ||
                 request.url.contains('vidsrc.stream') ||
                 request.url.contains('vidplay') ||
                 request.url.contains('2embed')) {
