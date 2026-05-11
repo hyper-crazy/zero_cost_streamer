@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import '../models/movie.dart';
+import '../models/content.dart';
 import '../services/tmdb_api.dart';
 
-class MovieProvider with ChangeNotifier {
+class ContentProvider with ChangeNotifier {
   final TmdbApi _api = TmdbApi();
 
-  List<Movie> trendingMovies = [];
+  List<Content> trendingContent = [];
+
+  // This alias prevents the "trendingMovies isn't defined" error in your Home Screen
+  List<Content> get trendingMovies => trendingContent;
+
   int _currentPage = 1;
   bool isLoading = false;
   bool isFetchingNextPage = false;
@@ -15,7 +19,7 @@ class MovieProvider with ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      trendingMovies = await _api.getTrending(page: _currentPage);
+      trendingContent = await _api.getTrending(page: _currentPage);
     } catch (e) {
       debugPrint("Error in fetchTrending: $e");
     } finally {
@@ -30,9 +34,9 @@ class MovieProvider with ChangeNotifier {
     notifyListeners();
     _currentPage++;
     try {
-      final newMovies = await _api.getTrending(page: _currentPage);
-      if (newMovies.isNotEmpty) {
-        trendingMovies.addAll(newMovies);
+      final newContent = await _api.getTrending(page: _currentPage);
+      if (newContent.isNotEmpty) {
+        trendingContent.addAll(newContent);
       }
     } catch (e) {
       debugPrint("Error in fetchNextPage: $e");

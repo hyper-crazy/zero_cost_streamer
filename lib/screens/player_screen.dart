@@ -1,11 +1,22 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import '../models/movie.dart';
+import '../models/content.dart';
 
 class PlayerScreen extends StatefulWidget {
-  final Movie movie;
-  const PlayerScreen({super.key, required this.movie});
+  final Content content;
+  final int? season;
+  final int? episode;
+  final List<dynamic>? episodesList;
+
+  const PlayerScreen({
+    super.key,
+    required this.content,
+    this.season,
+    this.episode,
+    this.episodesList,
+  });
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -14,24 +25,25 @@ class PlayerScreen extends StatefulWidget {
 class _PlayerScreenState extends State<PlayerScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
-  bool _isLandscape = true; // Track current rotation state
+  bool _isLandscape = true;
+  bool _isChangingEpisode = false;
 
   @override
   void initState() {
     super.initState();
-
-    // Initial setup: Force Landscape and Fullscreen
     _setLandscape();
 
-    final String videoUrl = 'https://vidsrc.to/embed/movie/${widget.movie.id}';
+    final String videoUrl = widget.season != null
+        ? 'https://vidsrc.to/embed/tv/${widget.content.id}/${widget.season}/${widget.episode}'
+        : 'https://vidsrc.to/embed/movie/${widget.content.id}';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.black)
-      ..setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+      ..setUserAgent("Mozilla/5.0 (Linux; Android 13; RMX3461) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36")
       ..setNavigationDelegate(
         NavigationDelegate(
-          onNavigationRequest: (NavigationRequest request) {
+          onNavigationRequest: (request) {
             if (request.url.contains('vidsrc.to') ||
                 request.url.contains('vidsrc.stream') ||
                 request.url.contains('vidplay') ||
@@ -57,7 +69,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
       ..loadRequest(Uri.parse(videoUrl));
   }
 
-  // --- ROTATION HELPERS ---
+  void _changeEpisode(int newEpisode) {
+    setState(() => _isChangingEpisode = true);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlayerScreen(
+          content: widget.content,
+          season: widget.season,
+          episode: newEpisode,
+          episodesList: widget.episodesList,
+        ),
+      ),
+    );
+  }
 
   void _setLandscape() {
     SystemChrome.setPreferredOrientations([
@@ -68,10 +94,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _setPortrait() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
-    // Optionally show status bars in portrait
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
@@ -88,9 +111,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
-    // ALWAYS reset to Portrait when exiting the player
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    if (!_isChangingEpisode) {
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     super.dispose();
   }
 
@@ -100,35 +124,50 @@ class _PlayerScreenState extends State<PlayerScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // The Player
-          Center(
-            child: WebViewWidget(controller: _controller),
-          ),
+          Center(child: WebViewWidget(controller: _controller)),
 
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Color(0xFF01B4E4))),
 
-          // UI OVERLAY: Buttons
+          // UI OVERLAY
           Positioned(
-            top: 20,
-            left: 20,
-            right: 20,
+            top: 20, left: 20, right: 20,
             child: SafeArea(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Back Button
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
                     child: _buildControlButton(Icons.arrow_back_ios_new),
                   ),
+                  Row(
+                    children: [
+                      // PREVIOUS EPISODE BUTTON
+                      if (widget.episode != null && widget.episode! > 1)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () => _changeEpisode(widget.episode! - 1),
+                            child: _buildControlButton(Icons.skip_previous),
+                          ),
+                        ),
 
-                  // MANUAL ROTATION TOGGLE
-                  GestureDetector(
-                    onTap: _toggleRotation,
-                    child: _buildControlButton(
-                      _isLandscape ? Icons.screen_lock_portrait : Icons.screen_lock_landscape,
-                    ),
+                      // NEXT EPISODE BUTTON
+                      if (widget.episode != null && widget.episodesList != null && widget.episode! < widget.episodesList!.length)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () => _changeEpisode(widget.episode! + 1),
+                            child: _buildControlButton(Icons.skip_next),
+                          ),
+                        ),
+
+                      // ROTATION TOGGLE
+                      GestureDetector(
+                        onTap: _toggleRotation,
+                        child: _buildControlButton(_isLandscape ? Icons.screen_lock_portrait : Icons.screen_lock_landscape),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -139,14 +178,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
-  // Helper for consistent button styling
   Widget _buildControlButton(IconData icon) {
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), shape: BoxShape.circle),
       child: Icon(icon, color: Colors.white, size: 20),
     );
   }

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/movie.dart';
+import '../models/content.dart';
 import 'player_screen.dart';
+import 'season_selection_screen.dart';
 
 class DetailsScreen extends StatelessWidget {
-  final Movie movie;
+  final Content movie;
   const DetailsScreen({super.key, required this.movie});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // TMDB Branding Colors
     const Color tmdbSecondary = Color(0xFF01B4E4);
     const Color tmdbTertiary = Color(0xFF90CEA1);
     const Color tmdbPrimaryDark = Color(0xFF0D253F);
@@ -67,14 +67,33 @@ class DetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
 
-                  // INSTANT WATCH NOW BUTTON
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => PlayerScreen(movie: movie))
-                      ),
+                      onPressed: () {
+                        if (movie.mediaType == 'tv') {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              transitionDuration: const Duration(milliseconds: 400),
+                              pageBuilder: (context, animation, secondaryAnimation) =>
+                                  SeasonSelectionScreen(content: movie),
+                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                // Slide from bottom to top with a smooth curve
+                                return SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.1),
+                                    end: Offset.zero,
+                                  ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutQuart)),
+                                  child: FadeTransition(opacity: animation, child: child),
+                                );
+                              },
+                            ),
+                          );
+                        } else {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(content: movie)));
+                        }
+                      },
                       icon: Icon(Icons.play_arrow, size: 32, color: isDark ? Colors.white : Colors.black87),
                       label: Text(
                         'WATCH NOW',
