@@ -59,66 +59,70 @@ class _SeasonSelectionScreenState extends State<SeasonSelectionScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true, // Key: to allow proper height calculation
       builder: (context) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? tmdbPrimaryDark.withOpacity(0.9)
-                : coffeeCream.withOpacity(0.95),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                      color: isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(2)
-                  )
-              ),
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  itemCount: seasons.length,
-                  itemBuilder: (context, index) {
-                    final s = seasons[index];
-                    final int sNum = s['season_number'];
-                    final bool isSelected = selectedSeason == sNum;
-
-                    // APPLYING BOTH MODES IN THE SELECTION TILE
-                    final Color activeColor = isDark ? tmdbSecondary : tmdbTertiary;
-                    final Color inactiveColor = isDark ? Colors.white60 : tmdbPrimaryDark.withOpacity(0.6);
-
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                      title: Text(
-                        "Season $sNum",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.montserrat(
-                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
-                          fontSize: isSelected ? 18 : 16,
-                          color: isSelected ? activeColor : inactiveColor,
-                        ),
-                      ),
-                      tileColor: isSelected
-                          ? activeColor.withOpacity(0.1)
-                          : Colors.transparent,
-                      onTap: () {
-                        setState(() {
-                          selectedSeason = sNum;
-                          _loadEpisodes(sNum);
-                        });
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
+        child: SafeArea( // Fixed: Ensure it respects bottom nav bar
+          child: Container(
+            margin: const EdgeInsets.only(top: 100), // fixed height container
+            decoration: BoxDecoration(
+              color: isDark
+                  ? tmdbPrimaryDark.withOpacity(0.9)
+                  : coffeeCream.withOpacity(0.95),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(2)
+                    )
                 ),
-              ),
-            ],
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    itemCount: seasons.length,
+                    itemBuilder: (context, index) {
+                      final s = seasons[index];
+                      final int sNum = s['season_number'];
+                      final bool isSelected = selectedSeason == sNum;
+
+                      // APPLYING BOTH MODES IN THE SELECTION TILE
+                      final Color activeColor = isDark ? tmdbSecondary : tmdbTertiary;
+                      final Color inactiveColor = isDark ? Colors.white60 : tmdbPrimaryDark.withOpacity(0.6);
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                        title: Text(
+                          "Season $sNum",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
+                            fontSize: isSelected ? 18 : 16,
+                            color: isSelected ? activeColor : inactiveColor,
+                          ),
+                        ),
+                        tileColor: isSelected
+                            ? activeColor.withOpacity(0.1)
+                            : Colors.transparent,
+                        onTap: () {
+                          setState(() {
+                            selectedSeason = sNum;
+                            _loadEpisodes(sNum);
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -237,15 +241,16 @@ class _SeasonSelectionScreenState extends State<SeasonSelectionScreen> {
             },
           ),
 
-          // LAYER 5: BOTTOM BAR (ADAPTIVE)
+          // LAYER 5: BOTTOM BAR (WATERMORPHISM FIX APPLIED)
           Positioned(
             bottom: 0, left: 0, right: 0,
             child: ClipRRect(
+              // Key Fix Layer:
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: Container(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                  color: tintLayerColor.withOpacity(0.7),
+                  color: Colors.transparent, // Solid blue background layer remove korsi
                   child: ElevatedButton(
                     onPressed: _showSeasonPicker,
                     style: ElevatedButton.styleFrom(

@@ -41,25 +41,40 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.black)
-      ..setUserAgent("Mozilla/5.0 (Linux; Android 13; RMX3461) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36")
+    // Release APK Fix: Hybrid Mobile UserAgent to bypass blocks & Cloudflare
+      ..setUserAgent("Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36")
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
-            if (request.url.contains(AppConstants.vidsrcBaseUrl.replaceAll('https://', '')) ||
-                request.url.contains('vidsrc.stream') ||
-                request.url.contains('vidplay') ||
-                request.url.contains('2embed')) {
+            final url = request.url.toLowerCase();
+
+            // Check if URL belongs to trusted domains from constants.dart
+            bool isTrusted = AppConstants.trustedStreamingDomains.any(
+                    (domain) => url.contains(domain.toLowerCase())
+            );
+
+            if (isTrusted) {
               return NavigationDecision.navigate;
             }
+
+            // Block all other main frame redirects (STOPS ADS/GOOGLE SEARCH REDIRECTS)
+            if (request.isMainFrame) {
+              debugPrint("Blocked Ad Redirect: $url");
+              return NavigationDecision.prevent;
+            }
+
             return NavigationDecision.prevent;
           },
-          onPageStarted: (String url) => setState(() => _isLoading = true),
+          onPageStarted: (String url) {
+            if (mounted) setState(() => _isLoading = true);
+          },
           onPageFinished: (String url) {
-            setState(() => _isLoading = false);
+            if (mounted) setState(() => _isLoading = false);
+            // Injecting CSS to hide ad overlays
             _controller.runJavaScript("""
               (function() {
                 var style = document.createElement('style');
-                style.innerHTML = '#overlay, .ads, .ad-box, .pop-under, .pop-up { display: none !important; }';
+                style.innerHTML = '#overlay, .ads, .ad-box, .pop-under, .pop-up, [class*="ad-"] { display: none !important; }';
                 document.head.appendChild(style);
                 window.open = function() { return null; };
               })();
@@ -113,8 +128,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void dispose() {
     if (!_isChangingEpisode) {
-      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      _setPortrait();
     }
     super.dispose();
   }
@@ -143,7 +157,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ),
                   Row(
                     children: [
-                      // PREVIOUS EPISODE BUTTON
+                      // PREVIOUS EPISODE
                       if (widget.episode != null && widget.episode! > 1)
                         Padding(
                           padding: const EdgeInsets.only(right: 12),
@@ -153,7 +167,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           ),
                         ),
 
-                      // NEXT EPISODE BUTTON
+                      // NEXT EPISODE
                       if (widget.episode != null && widget.episodesList != null && widget.episode! < widget.episodesList!.length)
                         Padding(
                           padding: const EdgeInsets.only(right: 12),
@@ -163,7 +177,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           ),
                         ),
 
-                      // ROTATION TOGGLE
+                      // ROTATION
                       GestureDetector(
                         onTap: _toggleRotation,
                         child: _buildControlButton(_isLandscape ? Icons.screen_lock_portrait : Icons.screen_lock_landscape),
