@@ -1,20 +1,20 @@
 # 🎬 Zero Stream
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.11.4-blue.svg)](https://flutter.dev)
-[![Version](https://img.shields.io/badge/Version-1.1.0-green.svg)](https://github.com/hyper-crazy/zero_cost_streamer/releases)
+[![Version](https://img.shields.io/badge/Version-1.2.0-green.svg)](https://github.com/hyper-crazy/zero_cost_streamer/releases)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-lightgrey.svg)](#)
 
 **Zero Stream** is a high-performance, modern streaming application built with Flutter. It combines the massive metadata library of **TMDB** with a seamless viewing experience, all wrapped in a "Watermorphic" frosted-glass UI.
 
 ---
 
-## 🚀 What's New in v1.1.0 (The Connectivity Update)
-In this minor release, I've focused on making the app "bulletproof" against network fluctuations and refining the user interface for premium devices:
+## 🚀 What's New in v1.2.0 (The Branding & Polish Update)
+In this release, I've focused on professional-grade branding and refinement:
 
-* **📡 Smart Connectivity Monitoring:** Integrated real-time network listeners. The app now detects when you're offline, notifies you instantly via custom SnackBars, and auto-refreshes data the moment you're back online.
-* **🛠 UI Persistence Fix:** Re-engineered the **Season Selection Screen** using dynamic `MediaQuery` logic. This ensures the bottom season picker stays perfectly positioned above the system navigation bar, even on high-res devices like the **S24 Ultra**.
-* **⚖️ Official Attribution:** Integrated TMDB attribution across the app's details screens to maintain legal compliance while keeping the design clean.
-* **🔒 Stable Player Environment:** Restored the core WebView player logic to ensure maximum compatibility and prevent SSL/Handshake errors across different streaming servers.
+* **🎨 Adaptive Launcher Icons:** Re-scaled the app branding to 42% for perfect fitment within Android's adaptive "Safe Zone."
+* **✨ Custom Splash Screen:** Implemented a clean, white-themed splash screen with the core logo centered for a premium loading experience.
+* **📡 Connectivity Guard:** Smart real-time network monitoring with auto-refresh logic when back online.
+* **📦 Custom APK Naming:** Automated Gradle scripts to generate builds named `Zero_Stream v1.2.0.apk` for better version tracking.
 
 ---
 
@@ -30,7 +30,7 @@ In this minor release, I've focused on making the app "bulletproof" against netw
 
 | Home Screen | Content Details | Episode Selection |
 | :---: | :---: | :---: |
-| <img src="assets/images/home_screen.png" width="200" /> | <img src="assets/images/content_details.png" width="200" /> | <img src="assets/images/episode_selection.png" width="200" /> |
+| <img src="assets/images/Home%20Screen.jpg" width="200" alt="Home Screen" /> | <img src="assets/images/Content%20Details.jpg" width="200" alt="Content Details" /> | <img src="assets/images/Episode%20Selection.jpg" width="200" alt="Episode Selection" /> |
 
 ---
 
