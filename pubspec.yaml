@@ -28,7 +28,6 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: "^0.13.1"
-  flutter_native_splash: "^2.4.0"
 
 # --- LAUNCHER ICONS ---
 flutter_launcher_icons:
@@ -37,16 +36,6 @@ flutter_launcher_icons:
   image_path: "assets/images/zs_logo_transparent bg.png"
   adaptive_icon_background: "#ffffff"
   adaptive_icon_foreground: "assets/images/zs_logo_transparent bg.png"
-
-# --- SPLASH SCREEN FIX (SAME FOR ALL MODES) ---
-flutter_native_splash:
-  color: "#E6E0D4"
-  image: "assets/images/zs_logo_transparent bg.png"
-
-  android_12:
-    color: "#E6E0D4"
-    icon_background_color: "#E6E0D4"
-    image: "assets/images/zs_logo_transparent bg.png"
 
 flutter:
   uses-material-design: true
