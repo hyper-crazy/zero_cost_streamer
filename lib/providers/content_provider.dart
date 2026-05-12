@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../models/content.dart';
 import '../services/tmdb_api.dart';
 
@@ -12,30 +13,51 @@ class ContentProvider with ChangeNotifier {
   bool _isFetchingNextPage = false;
   String _currentFilter = 'All';
 
+  // Manual Offline State
+  bool _isOffline = false;
+
   List<Content> get gridContent => _cacheGridData[_currentFilter] ?? [];
   List<Content> get sliderContent => _sliderContent;
   bool get isLoading => _isLoading;
   bool get isFetchingNextPage => _isFetchingNextPage;
+  bool get isOffline => _isOffline;
 
-  // Weighted Rating Calculation (IMDb Style)
+  void setOfflineStatus(bool status) {
+    _isOffline = status;
+    notifyListeners();
+  }
+
   double _calculateWeightedScore(Content content, int minVotes) {
     double v = content.voteCount.toDouble();
     double m = minVotes.toDouble();
     double R = content.rating;
-    double C = 7.0; // Average rating across the platform
+    double C = 7.0;
 
-    if (v < m) return R * (v / m); // Penalty for very low votes
+    if (v < m) return R * (v / m);
     return (v / (v + m) * R) + (m / (v + m) * C);
   }
 
   Future<void> initHome() async {
+    // Connection Check before fetching
+    final results = await Connectivity().checkConnectivity();
+    if (results.contains(ConnectivityResult.none)) {
+      _isOffline = true;
+      notifyListeners();
+      return;
+    }
+
     if (_sliderContent.isNotEmpty) return;
     _isLoading = true;
     notifyListeners();
     try {
       _sliderContent = await _api.getTrending(page: 1);
       await fetchContent(filter: 'All');
-    } catch (e) { debugPrint("Error: $e"); }
+    } catch (e) {
+      debugPrint("Error: $e");
+      _isOffline = true;
+    }
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> refreshHome() async {
@@ -47,6 +69,15 @@ class ContentProvider with ChangeNotifier {
 
   Future<void> fetchContent({required String filter, bool isLoadMore = false}) async {
     _currentFilter = filter;
+
+    // Check connection
+    final results = await Connectivity().checkConnectivity();
+    if (results.contains(ConnectivityResult.none)) {
+      _isOffline = true;
+      notifyListeners();
+      return;
+    }
+
     if (!isLoadMore && _cacheGridData.containsKey(filter)) {
       notifyListeners();
       return;
@@ -66,26 +97,19 @@ class ContentProvider with ChangeNotifier {
       List<Content> data = [];
 
       if (filter == 'Popular') {
-        // Popular: Trends are driven by Buzz (High Vote Count + Recent Popularity)
         List<Content> popMovies = await _api.getDiscoverContent(null, type: 'movie', sortBy: 'popularity.desc', page: page);
         List<Content> popTV = await _api.getDiscoverContent(null, type: 'tv', sortBy: 'popularity.desc', page: page);
-
         data = [...popMovies, ...popTV];
         data.sort((a, b) => b.voteCount.compareTo(a.voteCount));
-
       } else if (filter == 'Top Rated') {
-        // Top Rated: Hall of Fame (Strict Weighted Rating)
         List<Content> topMovies = await _api.getDiscoverContent(null, type: 'movie', sortBy: 'vote_average.desc', page: page, minVoteCount: 500);
         List<Content> topTV = await _api.getDiscoverContent(null, type: 'tv', sortBy: 'vote_average.desc', page: page, minVoteCount: 300);
-
         data = [...topMovies, ...topTV];
         data.sort((a, b) {
           int m = (a.mediaType == 'movie') ? 1000 : 500;
           return _calculateWeightedScore(b, m).compareTo(_calculateWeightedScore(a, m));
         });
-
       } else {
-        // All, Movies, TV Shows: Mixture logic with Randomization
         List<Content> latest = [];
         if (filter == 'Movies') latest = await _api.getDiscoverContent(null, type: 'movie', page: page);
         else if (filter == 'TV Shows') latest = await _api.getDiscoverContent(null, type: 'tv', page: page);
@@ -96,11 +120,9 @@ class ContentProvider with ChangeNotifier {
         if (filter == 'All') randomType = Random().nextBool() ? 'movie' : 'tv';
 
         List<Content> randomData = await _api.getDiscoverContent(null, page: randomPageNum, type: randomType);
-
         double latestRatio = (filter == 'All') ? 0.5 : 0.25;
         latest = latest.take((latest.length * latestRatio).round()).toList();
         randomData = randomData.take(max(0, 20 - latest.length)).toList();
-
         data = [...latest, ...randomData];
         data.shuffle();
       }
@@ -110,7 +132,11 @@ class ContentProvider with ChangeNotifier {
       } else {
         _cacheGridData[filter] = data;
       }
-    } catch (e) { debugPrint("Fetch Error: $e"); }
+      _isOffline = false;
+    } catch (e) {
+      debugPrint("Fetch Error: $e");
+      _isOffline = true;
+    }
 
     _isLoading = false;
     _isFetchingNextPage = false;

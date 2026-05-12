@@ -66,8 +66,26 @@ class _DetailsScreenState extends State<DetailsScreen> {
           SliverAppBar(
             expandedHeight: 350,
             pinned: true,
-            leading: const BackButton(color: Colors.white),
-            backgroundColor: isDark ? tmdbPrimaryDark : Colors.white,
+            // --- CLEAN MINIMAL BACK BUTTON ---
+            leading: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.2), // Halka kalo layer
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Colors.white,
+                  size: 24,
+                  shadows: [
+                    Shadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 2)),
+                  ],
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            backgroundColor: isDark ? tmdbPrimaryDark : const Color(0xFFE6E0D4),
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -147,15 +165,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
-                        SvgPicture.asset('assets/images/TMDB_attribution.svg', height: 20, colorFilter: const ColorFilter.mode(tmdbSecondary, BlendMode.srcIn)),
+                        SvgPicture.asset('assets/images/TMDB_attribution.svg', height: 20, colorFilter: ColorFilter.mode(mainButtonColor, BlendMode.srcIn)),
                         const SizedBox(width: 12),
                         Expanded(child: Text("This product uses the TMDB API but is not endorsed or certified by TMDB.", style: GoogleFonts.lato(fontSize: 11, color: secondaryTextColor, fontStyle: FontStyle.italic))),
                       ],
                     ),
                   ),
                   const SizedBox(height: 50),
-
-                  // Explore More Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

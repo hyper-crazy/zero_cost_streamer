@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final ScrollController _scrollController = ScrollController();
   late PageController _pageController;
   late AnimationController _progressController;
+  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   int _currentTrendingPage = 500;
   bool _isAutoSliding = false;
@@ -31,8 +33,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.initState();
     _pageController = PageController(viewportFraction: 0.9, initialPage: _currentTrendingPage);
     _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
+
     _progressController.addStatusListener((status) {
       if (status == AnimationStatus.completed) _slideNext();
+    });
+
+    // Connectivity Listener: Status Trigger & Slider Control
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+      final hasNet = !results.contains(ConnectivityResult.none);
+      final provider = Provider.of<ContentProvider>(context, listen: false);
+
+      if (!hasNet) {
+        provider.setOfflineStatus(true);
+        _progressController.stop(); // Stop slider on disconnect
+      } else {
+        // Eikhane manual resume trigger logic
+        // Jodi user retry kore online hoy, provider.isOffline false hobe
+        if (!provider.isOffline && !_progressController.isAnimating) {
+          _progressController.forward();
+        }
+      }
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -44,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         Provider.of<ContentProvider>(context, listen: false).fetchNextPage();
       }
     });
+
     _progressController.forward();
   }
 
@@ -67,6 +88,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    _connectivitySubscription.cancel();
     _progressController.dispose();
     _pageController.dispose();
     _scrollController.dispose();
@@ -79,6 +101,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).colorScheme.primary;
     final textColor = isDark ? Colors.white : const Color(0xFF0D253F);
+
+    // FIX: Re-trigger slider if data finally arrives after reconnect
+    if (!provider.isOffline &&
+        provider.sliderContent.isNotEmpty &&
+        !_progressController.isAnimating &&
+        !_isAutoSliding) {
+      _progressController.forward();
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -162,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             SliverPersistentHeader(
               pinned: true,
               delegate: _StickyChipDelegate(
-                height: 68, // Fixed: Increased for balanced look
+                height: 68,
                 child: Container(
                   color: Theme.of(context).scaffoldBackgroundColor,
                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -202,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   style: GoogleFonts.montserrat(
                                     color: isSelected ? Colors.black : textColor,
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                    fontSize: 13, // Fixed: Balance between large and small
+                                    fontSize: 13,
                                   ),
                                 ),
                               ),
