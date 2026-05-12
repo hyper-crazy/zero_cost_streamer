@@ -5,23 +5,34 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/content_provider.dart';
 import 'screens/home_screen.dart';
 
-// Global Key for managing SnackBars across the app context
+// Global Key for managing SnackBars
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
+  // MUST BE FIRST: To bind the engine before any async calls
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Optimizing font loading for smoother UI rendering
-  GoogleFonts.config.allowRuntimeFetching = true;
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Warning: .env file missing");
+  }
 
-  await dotenv.load(fileName: ".env");
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ContentProvider()),
+      ],
+      // Zero-restart wrapper
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // Zero Stream Brand Color Palette
   static const Color tmdbDarkBlue = Color(0xFF0D253F);
   static const Color tmdbLightBlue = Color(0xFF01B4E4);
   static const Color tmdbLightGreen = Color(0xFF90CEA1);
@@ -29,56 +40,58 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ContentProvider()),
-      ],
-      child: MaterialApp(
-        title: 'Zero Stream',
-        debugShowCheckedModeBanner: false,
-        scaffoldMessengerKey: scaffoldMessengerKey,
+    // Standardizing text themes once to prevent rebuild flicker
+    final lightTextTheme = GoogleFonts.montserratTextTheme(ThemeData.light().textTheme);
+    final darkTextTheme = GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme);
 
-        // Premium Dark Theme (TMDB Inspired)
-        darkTheme: ThemeData(
-          useMaterial3: true,
+    return MaterialApp(
+      // FIXED: Using a UniqueKey here can sometimes cause refresh,
+      // but a ValueKey helps Flutter differentiate themes without losing state.
+      key: const ValueKey('ZeroStreamMainApp'),
+      title: 'Zero Stream',
+      debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: scaffoldMessengerKey,
+
+      // --- DARK THEME ---
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: tmdbDarkBlue,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: tmdbLightBlue,
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: tmdbDarkBlue,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: tmdbLightBlue,
-            brightness: Brightness.dark,
-            primary: tmdbLightBlue,
-            surface: tmdbDarkBlue,
-          ),
-          textTheme: GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: tmdbDarkBlue,
-            elevation: 0,
-            centerTitle: true,
-          ),
+          primary: tmdbLightBlue,
+          surface: tmdbDarkBlue,
         ),
-
-        // Premium Light Theme (Coffee Cream)
-        theme: ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: coffeeCream,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: tmdbLightBlue,
-            brightness: Brightness.light,
-            primary: tmdbLightGreen,
-            surface: coffeeCream,
-          ),
-          textTheme: GoogleFonts.montserratTextTheme(ThemeData.light().textTheme),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: coffeeCream,
-            elevation: 0,
-            centerTitle: true,
-          ),
+        textTheme: darkTextTheme,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: tmdbDarkBlue,
+          elevation: 0,
+          centerTitle: true,
         ),
-
-        themeMode: ThemeMode.system,
-        home: const HomeScreen(),
       ),
+
+      // --- LIGHT THEME ---
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: coffeeCream,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: tmdbLightBlue,
+          brightness: Brightness.light,
+          primary: tmdbLightGreen,
+          surface: coffeeCream,
+        ),
+        textTheme: lightTextTheme,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: coffeeCream,
+          elevation: 0,
+          centerTitle: true,
+        ),
+      ),
+
+      themeMode: ThemeMode.system,
+      home: const HomeScreen(),
     );
   }
 }

@@ -7,7 +7,8 @@ class Content {
   final String releaseYear;
   final double rating;
   final int voteCount;
-  final String mediaType; // Distinguishes between 'movie' and 'tv'
+  final String mediaType;
+  final List<int> genreIds;
 
   Content({
     required this.id,
@@ -19,6 +20,7 @@ class Content {
     required this.rating,
     required this.voteCount,
     required this.mediaType,
+    required this.genreIds,
   });
 
   factory Content.fromJson(Map<String, dynamic> json) {
@@ -26,9 +28,12 @@ class Content {
     String rawDate = json['release_date'] ?? json['first_air_date'] ?? '';
     String parsedYear = rawDate.length >= 4 ? rawDate.substring(0, 4) : 'N/A';
 
+    // TMDB Trending/Discover logic fix:
+    // Title thakle Movie, Name thakle TV Show. Default fallback to movie.
+    String determinedType = json['media_type'] ?? (json['title'] != null ? 'movie' : 'tv');
+
     return Content(
       id: json['id'] ?? 0,
-      // TMDB uses 'title' for movies and 'name' for TV shows
       title: json['title'] ?? json['name'] ?? 'Unknown Title',
       overview: json['overview'] ?? 'No description available.',
       posterPath: json['poster_path'] ?? '',
@@ -36,11 +41,11 @@ class Content {
       releaseYear: parsedYear,
       rating: (json['vote_average'] as num?)?.toDouble() ?? 0.0,
       voteCount: json['vote_count'] ?? 0,
-      mediaType: json['media_type'] ?? 'movie',
+      mediaType: determinedType,
+      genreIds: List<int>.from(json['genre_ids'] ?? []),
     );
   }
 
-  // Image URL Helpers
   String get fullPosterUrl => 'https://image.tmdb.org/t/p/w500$posterPath';
   String get fullBackdropUrl => 'https://image.tmdb.org/t/p/w1280$backdropPath';
 }

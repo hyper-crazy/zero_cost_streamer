@@ -1,85 +1,75 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/content_provider.dart';
 import '../widgets/content_card.dart';
+import 'details_screen.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
-  String selectedFilter = 'All';
-  final List<String> filters = ['All', 'Movies', 'TV Shows', 'Trending', 'Popular', 'Top Rated'];
+  late PageController _pageController;
+  late AnimationController _progressController;
 
-  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
-  bool _isOffline = false;
+  int _currentTrendingPage = 500;
+  bool _isAutoSliding = false;
+
+  String selectedFilter = 'All';
+  final List<String> filters = ['All', 'Movies', 'TV Shows', 'Popular', 'Top Rated'];
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(viewportFraction: 0.9, initialPage: _currentTrendingPage);
+    _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
+    _progressController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) _slideNext();
+    });
 
-    // Initial data fetch after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ContentProvider>(context, listen: false).fetchTrending();
+      Provider.of<ContentProvider>(context, listen: false).initHome();
     });
 
-    // Real-time connectivity listener
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
-      final bool hasNoConnection = result.contains(ConnectivityResult.none);
-
-      if (hasNoConnection) {
-        setState(() => _isOffline = true);
-        _showStatusSnackBar("Connection Lost!", isError: true);
-      } else {
-        if (_isOffline) {
-          _showStatusSnackBar("Back Online!", isError: false);
-          Provider.of<ContentProvider>(context, listen: false).fetchTrending();
-        }
-        setState(() => _isOffline = false);
-      }
-    });
-
-    // Pagination listener for infinite scroll
     _scrollController.addListener(() {
-      final provider = Provider.of<ContentProvider>(context, listen: false);
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 300) {
-        if (!_isOffline) provider.fetchNextPage();
+        Provider.of<ContentProvider>(context, listen: false).fetchNextPage();
       }
     });
+    _progressController.forward();
   }
 
-  void _showStatusSnackBar(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(isError ? Icons.wifi_off : Icons.wifi, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Text(message, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
-          ],
-        ),
-        backgroundColor: isError ? Colors.redAccent.withOpacity(0.9) : Colors.green.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+  void _slideNext() {
+    if (_pageController.hasClients) {
+      _isAutoSliding = true;
+      _currentTrendingPage++;
+      _pageController.animateToPage(
+          _currentTrendingPage,
+          duration: const Duration(milliseconds: 1000),
+          curve: Curves.easeInOutCubic
+      ).then((_) {
+        if (mounted) {
+          _isAutoSliding = false;
+          _progressController.reset();
+          _progressController.forward();
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _progressController.dispose();
+    _pageController.dispose();
     _scrollController.dispose();
-    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -92,128 +82,175 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Colors.transparent,
+        title: Row(mainAxisSize: MainAxisSize.min, children: [
+          Image.asset('assets/images/zs_logo_transparent bg.png', height: 65, width: 65),
+          Text('Zero Stream', style: GoogleFonts.montserrat(color: textColor, fontWeight: FontWeight.bold, fontSize: 20)),
+        ]),
         centerTitle: true,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/zs_logo_transparent bg.png',
-              height: 75,
-              width: 75,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-            ),
-            const SizedBox(width: 2), // Tight spacing for cohesive branding
-            Text(
-              'Zero Stream',
-              style: GoogleFonts.montserrat(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-                fontSize: 19, // Adjusted for visual balance with the logo
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
-        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, size: 28, color: textColor),
-            onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SearchScreen())
-            ),
-          ),
-          const SizedBox(width: 8),
+              icon: Icon(Icons.search, size: 28, color: textColor),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()))
+          )
         ],
-        bottom: provider.isFetchingNextPage
-            ? PreferredSize(
-          preferredSize: const Size.fromHeight(2),
-          child: LinearProgressIndicator(
-            backgroundColor: Colors.transparent,
-            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
-            minHeight: 2,
-          ),
-        )
-            : null,
       ),
-      body: Column(
-        children: [
-          if (_isOffline)
-            Container(
-              width: double.infinity,
-              color: Colors.redAccent,
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: const Text(
-                "You are currently offline",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-              ),
+      body: RefreshIndicator(
+        onRefresh: () => provider.refreshHome(),
+        color: primaryColor,
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            SliverToBoxAdapter(
+                child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                    child: Text('Trending Now', style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.w900, color: textColor))
+                )
             ),
 
-          // Filter Chips Section
-          Container(
-            height: 40,
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: filters.length,
-              itemBuilder: (context, index) {
-                bool isSelected = selectedFilter == filters[index];
-                Color activeColor = isDark ? const Color(0xFF01B4E4) : const Color(0xFF90CEA1);
-                Color inactiveColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFF01B4E4).withOpacity(0.1);
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => selectedFilter = filters[index]),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isSelected ? activeColor : inactiveColor,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected ? Colors.transparent : (isDark ? Colors.white10 : Colors.black12),
+            // --- TRENDING SLIDER ---
+            SliverToBoxAdapter(
+              child: Column(children: [
+                SizedBox(
+                  height: 220,
+                  child: provider.sliderContent.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : PageView.builder(
+                    controller: _pageController,
+                    itemCount: 10000,
+                    onPageChanged: (index) { if (!_isAutoSliding) { _currentTrendingPage = index; _progressController.reset(); _progressController.forward(); } },
+                    itemBuilder: (context, index) {
+                      final list = provider.sliderContent.take(7).toList();
+                      final content = list[index % list.length];
+                      return GestureDetector(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetailsScreen(movie: content))),
+                        child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Stack(fit: StackFit.expand, children: [
+                                  CachedNetworkImage(imageUrl: content.fullBackdropUrl, fit: BoxFit.cover, placeholder: (context, url) => Container(color: Colors.black12)),
+                                  DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.95)]))),
+                                  Positioned(bottom: 15, left: 15, right: 85, child: Text("${content.title} (${content.releaseYear})", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                  Positioned(bottom: 15, right: 15, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: primaryColor.withOpacity(0.85), borderRadius: BorderRadius.circular(8)), child: Text(content.mediaType.toUpperCase(), style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)))),
+                                ])
+                            )
                         ),
-                      ),
-                      child: Text(
-                        filters[index],
-                        style: GoogleFonts.montserrat(
-                          color: isSelected ? Colors.black : textColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: AnimatedBuilder(
+                        animation: _progressController,
+                        builder: (context, child) => LinearProgressIndicator(
+                            value: _progressController.value,
+                            backgroundColor: isDark ? Colors.white10 : Colors.black12,
+                            valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                            minHeight: 3,
+                            borderRadius: BorderRadius.circular(10)
+                        )
+                    )
+                ),
+                const SizedBox(height: 16),
+              ]),
             ),
-          ),
 
-          // Main Content Grid
-          Expanded(
-            child: provider.isLoading && provider.trendingContent.isEmpty
-                ? Center(child: CircularProgressIndicator(color: primaryColor))
-                : GridView.builder(
-              key: const PageStorageKey('home_grid'),
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.60,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+            // --- STICKY COMPACT PILL CHIPS ---
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyChipDelegate(
+                height: 68, // Fixed: Increased for balanced look
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filters.length,
+                    itemBuilder: (context, index) {
+                      bool isSelected = selectedFilter == filters[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => selectedFilter = filters[index]);
+                            provider.fetchContent(filter: filters[index]);
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? primaryColor
+                                      : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)),
+                                  borderRadius: BorderRadius.circular(100),
+                                  border: Border.all(
+                                    color: isSelected ? primaryColor : Colors.white.withOpacity(0.1),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  filters[index],
+                                  style: GoogleFonts.montserrat(
+                                    color: isSelected ? Colors.black : textColor,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                    fontSize: 13, // Fixed: Balance between large and small
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
-              itemCount: provider.trendingContent.length,
-              itemBuilder: (context, index) {
-                return ContentCard(content: provider.trendingContent[index]);
-              },
             ),
-          ),
-        ],
+
+            // --- GRID CONTENT ---
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: provider.isLoading
+                  ? const SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: CircularProgressIndicator())))
+                  : SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.62,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16
+                ),
+                delegate: SliverChildBuilderDelegate(
+                        (context, index) => ContentCard(content: provider.gridContent[index]),
+                    childCount: provider.gridContent.length
+                ),
+              ),
+            ),
+
+            if (provider.isFetchingNextPage)
+              const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _StickyChipDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+  _StickyChipDelegate({required this.child, required this.height});
+
+  @override double get minExtent => height;
+  @override double get maxExtent => height;
+  @override Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => child;
+  @override bool shouldRebuild(covariant _StickyChipDelegate oldDelegate) => true;
 }
