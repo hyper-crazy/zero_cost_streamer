@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // TMDB logo-r jonno
 import '../models/content.dart';
 import 'player_screen.dart';
 import 'season_selection_screen.dart';
@@ -13,7 +14,7 @@ class DetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    const Color tmdbSecondary = Color(0xFF01B4E4);
+    const Color tmdbSecondary = Color(0xFF01B4E4); // Official TMDB Blue
     const Color tmdbTertiary = Color(0xFF90CEA1);
     const Color tmdbPrimaryDark = Color(0xFF0D253F);
 
@@ -79,7 +80,6 @@ class DetailsScreen extends StatelessWidget {
                               pageBuilder: (context, animation, secondaryAnimation) =>
                                   SeasonSelectionScreen(content: movie),
                               transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                // Slide from bottom to top with a smooth curve
                                 return SlideTransition(
                                   position: Tween<Offset>(
                                     begin: const Offset(0, 0.1),
@@ -118,7 +118,39 @@ class DetailsScreen extends StatelessWidget {
                     movie.overview,
                     style: GoogleFonts.lato(fontSize: 17, height: 1.6, color: secondaryTextColor),
                   ),
-                  const SizedBox(height: 100),
+
+                  const SizedBox(height: 40),
+
+                  // --- FIXED: TMDB ATTRIBUTION LOGIC ---
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/images/TMDB_attribution.svg',
+                          height: 20,
+                          colorFilter: const ColorFilter.mode(tmdbSecondary, BlendMode.srcIn),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+                            style: GoogleFonts.lato(
+                              fontSize: 11,
+                              color: secondaryTextColor,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 80), // List shesh korar padding
                 ],
               ),
             ),

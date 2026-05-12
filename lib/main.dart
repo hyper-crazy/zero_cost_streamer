@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/content_provider.dart';
 import 'screens/home_screen.dart';
 
+// Global Key for SnackBar (Jate jekono screen theke connectivity message dekhano jay)
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -33,20 +36,26 @@ class MyApp extends StatelessWidget {
         title: 'Zero Stream',
         debugShowCheckedModeBanner: false,
 
+        // --- GLOBAL KEY ATTACHMENT ---
+        scaffoldMessengerKey: scaffoldMessengerKey,
+
         // Stabilized Dark Theme
         darkTheme: ThemeData(
-          useMaterial3: true, // Forces modern rendering engine
+          useMaterial3: true,
           brightness: Brightness.dark,
           scaffoldBackgroundColor: tmdbDarkBlue,
           colorScheme: ColorScheme.fromSeed(
             seedColor: tmdbLightBlue,
             brightness: Brightness.dark,
+            primary: tmdbLightBlue,
             surface: tmdbDarkBlue,
           ),
-          textTheme: GoogleFonts.montserratTextTheme(
-            Theme.of(context).brightness == Brightness.dark
-                ? ThemeData.dark().textTheme
-                : ThemeData.light().textTheme,
+          textTheme: GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: tmdbDarkBlue,
+            elevation: 0,
+            iconTheme: IconThemeData(color: Colors.white),
+            titleTextStyle: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
         ),
 
@@ -58,6 +67,7 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(
             seedColor: tmdbLightBlue,
             brightness: Brightness.light,
+            primary: tmdbLightGreen,
             surface: coffeeCream,
           ),
           textTheme: GoogleFonts.montserratTextTheme(ThemeData.light().textTheme),
