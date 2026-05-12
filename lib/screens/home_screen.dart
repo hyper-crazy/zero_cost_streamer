@@ -19,7 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedFilter = 'All';
   final List<String> filters = ['All', 'Movies', 'TV Shows', 'Trending', 'Popular', 'Top Rated'];
 
-  // Connectivity variables
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
   bool _isOffline = false;
 
@@ -27,12 +26,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    // Initial data fetch
+    // Initial data fetch after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ContentProvider>(context, listen: false).fetchTrending();
     });
 
-    // 1. Connection Monitor Logic
+    // Real-time connectivity listener
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> result) {
       final bool hasNoConnection = result.contains(ConnectivityResult.none);
 
@@ -41,15 +40,14 @@ class _HomeScreenState extends State<HomeScreen> {
         _showStatusSnackBar("Connection Lost!", isError: true);
       } else {
         if (_isOffline) {
-          _showStatusSnackBar("Connecting to the server...", isError: false);
-          // Auto refresh logic when back online
+          _showStatusSnackBar("Back Online!", isError: false);
           Provider.of<ContentProvider>(context, listen: false).fetchTrending();
         }
         setState(() => _isOffline = false);
       }
     });
 
-    // Pagination Logic
+    // Pagination listener for infinite scroll
     _scrollController.addListener(() {
       final provider = Provider.of<ContentProvider>(context, listen: false);
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 300) {
@@ -58,9 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Connectivity SnackBar Logic
   void _showStatusSnackBar(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Purono ta shoraia notun ta dibe
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -72,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         backgroundColor: isError ? Colors.redAccent.withOpacity(0.9) : Colors.green.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: isError ? 5 : 2),
+        duration: const Duration(seconds: 2),
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -82,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _connectivitySubscription.cancel(); // Memory leak prevent korbe
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -95,11 +92,36 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Zero Stream', style: GoogleFonts.montserrat(color: textColor, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/zs_logo_transparent bg.png',
+              height: 75,
+              width: 75,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+            ),
+            const SizedBox(width: 2), // Tight spacing for cohesive branding
+            Text(
+              'Zero Stream',
+              style: GoogleFonts.montserrat(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 19, // Adjusted for visual balance with the logo
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.search, size: 28, color: textColor),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen())),
+            onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchScreen())
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -116,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // Offline Indicator Banner (Optional but very pro look)
           if (_isOffline)
             Container(
               width: double.infinity,
@@ -129,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
+          // Filter Chips Section
           Container(
             height: 40,
             margin: const EdgeInsets.symmetric(vertical: 12),
@@ -169,6 +191,8 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ),
+
+          // Main Content Grid
           Expanded(
             child: provider.isLoading && provider.trendingContent.isEmpty
                 ? Center(child: CircularProgressIndicator(color: primaryColor))

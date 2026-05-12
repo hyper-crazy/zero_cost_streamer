@@ -7,7 +7,7 @@ class Content {
   final String releaseYear;
   final double rating;
   final int voteCount;
-  final String mediaType; // Added to distinguish movie vs tv
+  final String mediaType; // Distinguishes between 'movie' and 'tv'
 
   Content({
     required this.id,
@@ -22,11 +22,13 @@ class Content {
   });
 
   factory Content.fromJson(Map<String, dynamic> json) {
+    // Handling different date keys for Movies vs TV Shows
     String rawDate = json['release_date'] ?? json['first_air_date'] ?? '';
     String parsedYear = rawDate.length >= 4 ? rawDate.substring(0, 4) : 'N/A';
 
     return Content(
       id: json['id'] ?? 0,
+      // TMDB uses 'title' for movies and 'name' for TV shows
       title: json['title'] ?? json['name'] ?? 'Unknown Title',
       overview: json['overview'] ?? 'No description available.',
       posterPath: json['poster_path'] ?? '',
@@ -38,6 +40,7 @@ class Content {
     );
   }
 
+  // Image URL Helpers
   String get fullPosterUrl => 'https://image.tmdb.org/t/p/w500$posterPath';
   String get fullBackdropUrl => 'https://image.tmdb.org/t/p/w1280$backdropPath';
 }

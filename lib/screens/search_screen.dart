@@ -15,7 +15,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController(); // Lazy loading er jonno
+  final ScrollController _scrollController = ScrollController();
   final TmdbApi _api = TmdbApi();
 
   List<Content> _searchResults = [];
@@ -31,7 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
     _loadSearchHistory();
 
-    // Scroll listener add kora hoise lazy loading er jonno
+    // Infinite scroll listener
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
         if (!_isLoading && !_isLoadMore && _hasNextPage && _searchController.text.isNotEmpty) {
@@ -46,7 +46,7 @@ class _SearchScreenState extends State<SearchScreen> {
     setState(() => _searchHistory = prefs.getStringList('search_history') ?? []);
   }
 
-  // Prothom bar search er jonno
+  // Primary search logic
   void _onSearchChanged(String query) async {
     if (query.trim().isEmpty) {
       setState(() {
@@ -59,12 +59,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
     setState(() {
       _isLoading = true;
-      _currentPage = 1; // Reset page
+      _currentPage = 1;
       _hasNextPage = true;
     });
 
     try {
-      final results = await _api.searchContent(query, page: 1); // Page 1 load
+      final results = await _api.searchContent(query, page: 1);
       setState(() {
         _searchResults = results;
         _isLoading = false;
@@ -74,7 +74,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  // Next page load korar function (Lazy Loading)
+  // Pagination: Load next page results
   Future<void> _loadMoreResults() async {
     setState(() => _isLoadMore = true);
     _currentPage++;
@@ -132,10 +132,14 @@ class _SearchScreenState extends State<SearchScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text('Search', style: GoogleFonts.montserrat(fontWeight: FontWeight.w900, color: textColor)),
+        title: Text(
+            'Search',
+            style: GoogleFonts.montserrat(fontWeight: FontWeight.w900, color: textColor)
+        ),
       ),
       body: Column(
         children: [
+          // Search Input Field
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: TextField(
@@ -149,10 +153,14 @@ class _SearchScreenState extends State<SearchScreen> {
                 prefixIcon: Icon(Icons.search, color: textColor.withOpacity(0.7)),
                 filled: true,
                 fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none
+                ),
               ),
             ),
           ),
+
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator(color: isDark ? const Color(0xFF01B4E4) : const Color(0xFF90CEA1)))
@@ -160,11 +168,17 @@ class _SearchScreenState extends State<SearchScreen> {
                 ? _buildSearchHistory(textColor, isDark)
                 : _buildResultsGrid(),
           ),
-          // Niche choto loading indicator jokhono load more hobe
+
+          // Bottom Pagination Loader
           if (_isLoadMore)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? const Color(0xFF01B4E4) : const Color(0xFF90CEA1))),
+              child: Center(
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: isDark ? const Color(0xFF01B4E4) : const Color(0xFF90CEA1)
+                  )
+              ),
             ),
         ],
       ),
@@ -176,7 +190,10 @@ class _SearchScreenState extends State<SearchScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         if (_searchHistory.isNotEmpty)
-          Text('Recent Searches', style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, color: textColor, fontSize: 18)),
+          Text(
+              'Recent Searches',
+              style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, color: textColor, fontSize: 18)
+          ),
         const SizedBox(height: 15),
         ..._searchHistory.map((query) => Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -210,7 +227,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildResultsGrid() {
     return GridView.builder(
-      controller: _scrollController, // Controller attach kora hoise
+      controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,

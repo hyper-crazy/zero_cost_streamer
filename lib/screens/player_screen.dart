@@ -41,25 +41,22 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.black)
-    // Release APK Fix: Hybrid Mobile UserAgent to bypass blocks & Cloudflare
+    // Custom UserAgent to prevent blocks and bypass Cloudflare checks
       ..setUserAgent("Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36")
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
             final url = request.url.toLowerCase();
 
-            // Check if URL belongs to trusted domains from constants.dart
+            // Allow navigation only for trusted streaming domains
             bool isTrusted = AppConstants.trustedStreamingDomains.any(
                     (domain) => url.contains(domain.toLowerCase())
             );
 
-            if (isTrusted) {
-              return NavigationDecision.navigate;
-            }
+            if (isTrusted) return NavigationDecision.navigate;
 
-            // Block all other main frame redirects (STOPS ADS/GOOGLE SEARCH REDIRECTS)
+            // Block ad redirects from the main frame
             if (request.isMainFrame) {
-              debugPrint("Blocked Ad Redirect: $url");
               return NavigationDecision.prevent;
             }
 
@@ -70,7 +67,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
           },
           onPageFinished: (String url) {
             if (mounted) setState(() => _isLoading = false);
-            // Injecting CSS to hide ad overlays
+
+            // Injecting JS to block common ad overlays and popups
             _controller.runJavaScript("""
               (function() {
                 var style = document.createElement('style');
@@ -127,6 +125,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    // Reset orientation unless navigating to another episode
     if (!_isChangingEpisode) {
       _setPortrait();
     }
@@ -144,7 +143,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Color(0xFF01B4E4))),
 
-          // UI OVERLAY
+          // Control Overlay
           Positioned(
             top: 20, left: 20, right: 20,
             child: SafeArea(
@@ -157,7 +156,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ),
                   Row(
                     children: [
-                      // PREVIOUS EPISODE
+                      // Navigation: Previous Episode
                       if (widget.episode != null && widget.episode! > 1)
                         Padding(
                           padding: const EdgeInsets.only(right: 12),
@@ -167,7 +166,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           ),
                         ),
 
-                      // NEXT EPISODE
+                      // Navigation: Next Episode
                       if (widget.episode != null && widget.episodesList != null && widget.episode! < widget.episodesList!.length)
                         Padding(
                           padding: const EdgeInsets.only(right: 12),
@@ -177,7 +176,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           ),
                         ),
 
-                      // ROTATION
+                      // Screen Rotation Toggle
                       GestureDetector(
                         onTap: _toggleRotation,
                         child: _buildControlButton(_isLandscape ? Icons.screen_lock_portrait : Icons.screen_lock_landscape),
@@ -196,7 +195,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Widget _buildControlButton(IconData icon) {
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.5),
+        shape: BoxShape.circle,
+      ),
       child: Icon(icon, color: Colors.white, size: 20),
     );
   }

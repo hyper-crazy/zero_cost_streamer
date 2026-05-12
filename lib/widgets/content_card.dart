@@ -40,6 +40,7 @@ class ContentCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Poster Image with Hero Animation
               Expanded(
                 child: Hero(
                   tag: 'movie_${content.id}',
@@ -49,21 +50,24 @@ class ContentCard extends StatelessWidget {
                       imageUrl: content.fullPosterUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
+                      errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image)),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 6), // Gap komano hoise layout thik korte
+              const SizedBox(height: 6),
+              // Content Title
               Text(
                 content.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.montserrat(
                   fontWeight: FontWeight.bold,
-                  fontSize: 13, // Standard kora hoise common usage er jonno
+                  fontSize: 13,
                   color: textColor,
                 ),
               ),
+              // Release Year
               Text(
                 '(${content.releaseYear})',
                 style: GoogleFonts.montserrat(
@@ -73,7 +77,8 @@ class ContentCard extends StatelessWidget {
               ),
             ],
           ),
-          // TYPE TAG (SERIES / MOVIE)
+
+          // Media Type Tag (Series / Movie)
           Positioned(
             top: 8,
             left: 8,
@@ -89,7 +94,8 @@ class ContentCard extends StatelessWidget {
               ),
             ),
           ),
-          // RATING BADGE
+
+          // Rating Badge
           Positioned(
             top: 8,
             right: 8,

@@ -5,13 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/content_provider.dart';
 import 'screens/home_screen.dart';
 
-// Global Key for SnackBar (Jate jekono screen theke connectivity message dekhano jay)
+// Global Key for managing SnackBars across the app context
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // High-performance font loading: Pre-configures fonts to prevent black-screen flicker
+  // Optimizing font loading for smoother UI rendering
   GoogleFonts.config.allowRuntimeFetching = true;
 
   await dotenv.load(fileName: ".env");
@@ -21,6 +21,7 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // Zero Stream Brand Color Palette
   static const Color tmdbDarkBlue = Color(0xFF0D253F);
   static const Color tmdbLightBlue = Color(0xFF01B4E4);
   static const Color tmdbLightGreen = Color(0xFF90CEA1);
@@ -35,11 +36,9 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Zero Stream',
         debugShowCheckedModeBanner: false,
-
-        // --- GLOBAL KEY ATTACHMENT ---
         scaffoldMessengerKey: scaffoldMessengerKey,
 
-        // Stabilized Dark Theme
+        // Premium Dark Theme (TMDB Inspired)
         darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
@@ -54,12 +53,11 @@ class MyApp extends StatelessWidget {
           appBarTheme: const AppBarTheme(
             backgroundColor: tmdbDarkBlue,
             elevation: 0,
-            iconTheme: IconThemeData(color: Colors.white),
-            titleTextStyle: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            centerTitle: true,
           ),
         ),
 
-        // Stabilized Light Theme
+        // Premium Light Theme (Coffee Cream)
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,
@@ -74,8 +72,7 @@ class MyApp extends StatelessWidget {
           appBarTheme: const AppBarTheme(
             backgroundColor: coffeeCream,
             elevation: 0,
-            iconTheme: IconThemeData(color: Colors.black),
-            titleTextStyle: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
+            centerTitle: true,
           ),
         ),
 
