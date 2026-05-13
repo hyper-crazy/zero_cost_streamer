@@ -7,7 +7,7 @@ class TmdbApi {
   final String apiKey = dotenv.env['TMDB_API_KEY'] ?? '';
   final String baseUrl = 'https://api.themoviedb.org/3';
 
-  // 1. Trending
+  // Fetch trending movies and TV shows for the home slider
   Future<List<Content>> getTrending({int page = 1}) async {
     final response = await http.get(Uri.parse('$baseUrl/trending/all/day?api_key=$apiKey&page=$page'));
     if (response.statusCode == 200) {
@@ -17,7 +17,7 @@ class TmdbApi {
     throw Exception('Failed trending');
   }
 
-  // 2. Discover with Strict Sorting Logic
+  // Fetch content based on filters, genres, or categories (Discover)
   Future<List<Content>> getDiscoverContent(
       int? genreId, {
         int page = 1,
@@ -31,15 +31,13 @@ class TmdbApi {
       }) async {
     String urlType = (type == 'all') ? 'movie' : type;
 
-    // --- STRICT SORTING FIX ---
-    // TMDB movies use 'primary_release_date', but TV uses 'first_air_date'.
+    // Handle cross-platform sorting keys between Movies and TV Shows
     String finalSort = sortBy;
     if (sortBy.contains('primary_release_date')) {
       finalSort = (urlType == 'movie') ? sortBy : sortBy.replaceAll('primary_release_date', 'first_air_date');
     }
 
     String yearParam = (urlType == 'movie') ? 'primary_release_year' : 'first_air_date_year';
-
     String url = '$baseUrl/discover/$urlType?api_key=$apiKey&page=$page&sort_by=$finalSort&vote_count.gte=$minVoteCount';
 
     if (year != null && year != 'All') url += '&$yearParam=$year';
@@ -55,7 +53,7 @@ class TmdbApi {
     throw Exception('Failed discover');
   }
 
-  // 3. Search
+  // Multi-search functionality for both movies and TV shows
   Future<List<Content>> searchContent(String query, {int page = 1}) async {
     final response = await http.get(Uri.parse('$baseUrl/search/multi?api_key=$apiKey&query=${Uri.encodeComponent(query)}&page=$page'));
     if (response.statusCode == 200) {
@@ -65,7 +63,7 @@ class TmdbApi {
     throw Exception('Search failed');
   }
 
-  // 4. Genres
+  // Retrieve genre names and IDs
   Future<Map<int, String>> getGenreList(String type) async {
     String urlType = (type == 'all') ? 'movie' : type;
     final response = await http.get(Uri.parse('$baseUrl/genre/$urlType/list?api_key=$apiKey'));
@@ -76,14 +74,36 @@ class TmdbApi {
     return {};
   }
 
-  // 5. TV Data Restoration
+  // TV Show specific: Fetch season metadata
   Future<List<dynamic>> getSeasons(int id) async {
     final response = await http.get(Uri.parse('$baseUrl/tv/$id?api_key=$apiKey'));
     return (response.statusCode == 200) ? json.decode(response.body)['seasons'] ?? [] : [];
   }
 
+  // TV Show specific: Fetch episodes for a given season
   Future<List<dynamic>> getEpisodes(int id, int seasonNum) async {
     final response = await http.get(Uri.parse('$baseUrl/tv/$id/season/$seasonNum?api_key=$apiKey'));
     return (response.statusCode == 200) ? json.decode(response.body)['episodes'] ?? [] : [];
+  }
+
+  // Fetch YouTube video keys for trailers
+  Future<String?> getYoutubeKey(int id, String type) async {
+    final response = await http.get(Uri.parse('$baseUrl/$type/$id/videos?api_key=$apiKey'));
+    if (response.statusCode == 200) {
+      List results = json.decode(response.body)['results'];
+      if (results.isNotEmpty) {
+        try {
+          // Prioritize official YouTube trailers
+          final trailer = results.firstWhere(
+                (v) => v['site'] == 'YouTube' && v['type'] == 'Trailer',
+            orElse: () => results[0],
+          );
+          return trailer['key'];
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
   }
 }

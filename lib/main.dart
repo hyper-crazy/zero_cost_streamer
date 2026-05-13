@@ -1,18 +1,26 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+// Windows build error fixed by removing explicit controller calls here
 import 'providers/content_provider.dart';
 import 'screens/splash_screen.dart';
 import 'widgets/offline_overlay.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialization logic removed from main to avoid "Undefined name" errors
+  // The plugin handles this automatically when the first WebView is created.
+
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
     debugPrint("Env error: $e");
   }
+
   runApp(const MyApp());
 }
 
@@ -63,7 +71,6 @@ class MyApp extends StatelessWidget {
 
         builder: (context, child) {
           final provider = Provider.of<ContentProvider>(context);
-
           return Stack(
             children: [
               if (child != null) child,
