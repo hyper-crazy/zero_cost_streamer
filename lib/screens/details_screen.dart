@@ -2,13 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import '../models/content.dart';
 import '../services/tmdb_api.dart';
-import '../utils/helpers.dart';
 import '../widgets/content_card.dart';
 import 'player_screen.dart';
 import 'season_selection_screen.dart';
@@ -29,7 +27,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
   YoutubePlayerController? _ytController;
   String? _trailerKey;
   bool _isTrailerLoading = true;
-  bool _wasPlayingBeforeScroll = false;
+  bool _wasPlayingBeforeScroll = false; // Auto-resume tracker
 
   @override
   void initState() {
@@ -98,13 +96,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    const Color tmdbPrimaryDark = Color(0xFF0D253F);
-    final Color textColor = isDark ? Colors.white : tmdbPrimaryDark;
-
-    if (Platform.isWindows) {
-      return _buildMainContent(context, null);
-    }
+    if (Platform.isWindows) return _buildMainContent(context, null);
 
     return YoutubePlayerBuilder(
       player: YoutubePlayer(controller: _ytController ?? YoutubePlayerController(initialVideoId: '')),
@@ -117,6 +109,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     const Color tmdbSecondary = Color(0xFF01B4E4);
     const Color tmdbTertiary = Color(0xFF90CEA1);
     const Color tmdbPrimaryDark = Color(0xFF0D253F);
+
     final Color mainButtonColor = isDark ? tmdbSecondary : tmdbTertiary;
     final Color textColor = isDark ? Colors.white : tmdbPrimaryDark;
     final Color secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
@@ -130,8 +123,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
             leading: IconButton(
               icon: Container(
                 padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), shape: BoxShape.circle),
-                child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
+                decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+                child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -139,8 +132,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
             title: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset('assets/images/zs_logo_transparent bg.png', height: 45, width: 45, fit: BoxFit.contain),
-                const SizedBox(width: 2),
+                Image.asset('assets/images/zs_logo_transparent bg.png', height: 40),
+                const SizedBox(width: 8),
                 Text('Zero Stream', style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.bold, color: textColor)),
               ],
             ),
@@ -157,107 +150,130 @@ class _DetailsScreenState extends State<DetailsScreen> {
               ),
             ),
           ),
+
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(widget.movie.title, style: GoogleFonts.montserrat(fontSize: 28, fontWeight: FontWeight.w900, color: textColor)),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.star, color: mainButtonColor, size: 22),
-                      const SizedBox(width: 8),
+                      Icon(Icons.star, color: mainButtonColor, size: 20),
+                      const SizedBox(width: 6),
                       Text(widget.movie.rating.toStringAsFixed(1), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
                       const SizedBox(width: 8),
+                      // --- VOTE COUNT RESTORED ---
                       Text('(${widget.movie.voteCount} votes)', style: TextStyle(color: secondaryTextColor, fontSize: 13)),
-                      const Spacer(),
+                      const SizedBox(width: 12),
                       Text(widget.movie.releaseYear, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
                     ],
                   ),
-                  const SizedBox(height: 25),
+
+                  const SizedBox(height: 24),
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
                         _ytController?.pause();
-                        if (widget.movie.mediaType == 'tv') {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => SeasonSelectionScreen(content: widget.movie)));
-                        } else {
+                        if (Platform.isWindows) {
                           Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(content: widget.movie)));
+                        } else {
+                          if (widget.movie.mediaType == 'tv') {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => SeasonSelectionScreen(content: widget.movie)));
+                          } else {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(content: widget.movie)));
+                          }
                         }
                       },
-                      icon: Icon(Icons.play_arrow, size: 28, color: isDark ? Colors.white : Colors.black87),
-                      label: Text('WATCH NOW', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 15)),
-                      style: ElevatedButton.styleFrom(backgroundColor: mainButtonColor, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      icon: const Icon(Icons.play_arrow, size: 28),
+                      label: const Text('WATCH NOW', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: mainButtonColor,
+                        foregroundColor: isDark ? Colors.white : Colors.black87,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 25),
 
-                  if (!_isTrailerLoading && _trailerKey != null) ...[
-                    Text('Official Trailer', style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
-                    const SizedBox(height: 10),
+                  const SizedBox(height: 32),
+
+                  // --- TRAILER SECTION WITH FALLBACK & AUTO-RESUME ---
+                  Text('Official Trailer', style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
+                  const SizedBox(height: 12),
+                  if (_isTrailerLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_trailerKey == null)
+                  // --- FALLBACK RESTORED ---
+                    Container(
+                      height: 200, width: double.infinity,
+                      decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(16)),
+                      child: Center(child: Text("Trailer not available for this content", style: TextStyle(color: secondaryTextColor))),
+                    )
+                  else
                     Platform.isWindows
                         ? InkWell(
                       onTap: _launchTrailerUrl,
                       child: Container(
-                        height: 220, width: double.infinity,
-                        decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(16), image: DecorationImage(image: CachedNetworkImageProvider(widget.movie.fullBackdropUrl), fit: BoxFit.cover, opacity: 0.5)),
-                        child: const Center(child: Icon(Icons.play_circle_fill, color: Colors.white, size: 70)),
+                        height: 200, width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: DecorationImage(image: CachedNetworkImageProvider(widget.movie.fullBackdropUrl), fit: BoxFit.cover, opacity: 0.4),
+                          color: Colors.black,
+                        ),
+                        child: const Center(child: Icon(Icons.play_circle_fill, color: Colors.white, size: 64)),
                       ),
                     )
                         : VisibilityDetector(
                       key: Key('trailer-${widget.movie.id}'),
                       onVisibilityChanged: (info) {
                         if (_ytController == null) return;
+                        // --- AUTO RESUME LOGIC RESTORED ---
                         if (info.visibleFraction < 0.2 && _ytController!.value.isPlaying) {
-                          _ytController!.pause(); _wasPlayingBeforeScroll = true;
+                          _ytController!.pause();
+                          _wasPlayingBeforeScroll = true;
                         } else if (info.visibleFraction > 0.8 && _wasPlayingBeforeScroll) {
-                          _ytController!.play(); _wasPlayingBeforeScroll = false;
+                          _ytController!.play();
+                          _wasPlayingBeforeScroll = false;
                         }
                       },
                       child: ClipRRect(borderRadius: BorderRadius.circular(12), child: player ?? const SizedBox()),
                     ),
-                    const SizedBox(height: 25),
-                  ],
+
+                  const SizedBox(height: 32),
 
                   Text('Storyline', style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
-                  const SizedBox(height: 8),
-                  Text(widget.movie.overview, style: GoogleFonts.lato(fontSize: 16, height: 1.5, color: secondaryTextColor)),
+                  const SizedBox(height: 12),
+                  Text(widget.movie.overview, style: GoogleFonts.lato(fontSize: 16, height: 1.6, color: secondaryTextColor)),
 
-                  const SizedBox(height: 30), // Gap optimized
+                  const SizedBox(height: 40),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Explore More', style: GoogleFonts.montserrat(fontSize: 19, fontWeight: FontWeight.bold, color: textColor)),
                       if (!_isLoadingRecommendations)
-                        IconButton(
-                            constraints: const BoxConstraints(),
-                            padding: EdgeInsets.zero,
-                            icon: Icon(Icons.refresh, color: mainButtonColor, size: 22),
-                            onPressed: _fetchGenreRecommendations
-                        ),
+                        IconButton(icon: Icon(Icons.refresh, color: mainButtonColor), onPressed: _fetchGenreRecommendations),
                     ],
                   ),
-                  const SizedBox(height: 12), // Gap reduced between title and cards
+                  const SizedBox(height: 16),
                   _isLoadingRecommendations
                       ? const Center(child: CircularProgressIndicator())
                       : GridView.builder(
                     shrinkWrap: true,
-                    padding: EdgeInsets.zero, // Padding zero for tighter layout
+                    padding: EdgeInsets.zero,
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.62,
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14
+                      crossAxisCount: 2, childAspectRatio: 0.65, crossAxisSpacing: 16, mainAxisSpacing: 16,
                     ),
                     itemCount: _recommendations.length,
                     itemBuilder: (context, index) => ContentCard(content: _recommendations[index]),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

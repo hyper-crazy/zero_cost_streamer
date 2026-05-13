@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// Windows build error fixed by removing explicit controller calls here
 import 'providers/content_provider.dart';
 import 'screens/splash_screen.dart';
 import 'widgets/offline_overlay.dart';
@@ -12,13 +11,11 @@ import 'widgets/offline_overlay.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialization logic removed from main to avoid "Undefined name" errors
-  // The plugin handles this automatically when the first WebView is created.
-
+  // Load environment variables from .env file
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
-    debugPrint("Env error: $e");
+    debugPrint("Environment file error: $e");
   }
 
   runApp(const MyApp());
@@ -29,6 +26,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TMDB Official Palette
     const tmdbTertiaryGreen = Color(0xFF90CEA1);
     const tmdbSecondaryBlue = Color(0xFF01B4E4);
     const tmdbDeepNavy = Color(0xFF0D253F);
@@ -41,8 +39,9 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Zero Stream',
         debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.system, // Auto-switch based on system settings
 
+        // Premium Dark Theme (TMDB Navy Style)
         darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
@@ -55,6 +54,7 @@ class MyApp extends StatelessWidget {
           textTheme: GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme),
         ),
 
+        // Elegant Light Theme
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,
@@ -69,6 +69,7 @@ class MyApp extends StatelessWidget {
 
         home: const AnimatedSplashScreen(),
 
+        // Global Builder to handle Offline Overlay
         builder: (context, child) {
           final provider = Provider.of<ContentProvider>(context);
           return Stack(

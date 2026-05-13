@@ -36,94 +36,103 @@ class ContentCard extends StatelessWidget {
           ),
         );
       },
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Hero(
-                      tag: 'movie_${content.id}',
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: CachedNetworkImage(
-                          imageUrl: content.fullPosterUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image)),
-                        ),
-                      ),
+          // Poster Image with Badges
+          Expanded(
+            child: Stack(
+              children: [
+                Hero(
+                  tag: 'movie_${content.id}',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: content.fullPosterUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      placeholder: (context, url) => Container(color: Colors.white10),
+                      errorWidget: (context, url, error) => const Center(child: Icon(Icons.broken_image)),
                     ),
-                    if (content.genreIds.isNotEmpty)
-                      Positioned(
-                        top: 10, left: 10,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.white24, width: 1),
-                          ),
-                          child: Text(
-                            AppHelpers.getGenreName(content.genreIds[0]).toUpperCase(),
-                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                          ),
-                        ),
-                      ),
-                    Positioned(
-                      top: 10, right: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: primaryColor.withOpacity(0.5)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.star, color: primaryColor, size: 13),
-                            const SizedBox(width: 4),
-                            Text(
-                              content.rating.toStringAsFixed(1),
-                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                // Genre Badge
+                if (content.genreIds.isNotEmpty)
+                  Positioned(
+                    top: 10, left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Text(
+                        AppHelpers.getGenreName(content.genreIds[0]).toUpperCase(),
+                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                      ),
+                    ),
+                  ),
+                // Rating Badge
+                Positioned(
+                  top: 10, right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: primaryColor.withOpacity(0.5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(content.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
-                        const SizedBox(height: 2),
-                        Text(content.releaseYear, style: GoogleFonts.montserrat(color: subTextColor, fontSize: 12)),
+                        Icon(Icons.star, color: primaryColor, size: 13),
+                        const SizedBox(width: 4),
+                        Text(
+                          content.rating.toStringAsFixed(1),
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: isDark ? Colors.white24 : Colors.black12, width: 1.5),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Info Section
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        content.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)
                     ),
-                    child: Text(
-                      content.mediaType.toUpperCase(),
-                      style: GoogleFonts.montserrat(color: subTextColor, fontSize: 9, fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(content.releaseYear, style: GoogleFonts.montserrat(color: subTextColor, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Media Type Badge (Movie/TV)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: isDark ? Colors.white24 : Colors.black12),
+                ),
+                child: Text(
+                  content.mediaType.toUpperCase(),
+                  style: GoogleFonts.montserrat(color: subTextColor, fontSize: 9, fontWeight: FontWeight.w800),
+                ),
               ),
             ],
           ),

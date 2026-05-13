@@ -1,39 +1,39 @@
-# 🎬 Zero Stream - v2.1.0 (Windows & Hybrid Update)
+# 🎬 Zero Stream - v2.2.0
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.11.4-blue.svg)](https://flutter.dev)
-[![Version](https://img.shields.io/badge/Version-2.1.0-orange.svg)](https://github.com/hyper-crazy/zero_cost_streamer/releases)
+[![Version](https://img.shields.io/badge/Version-2.2.0-green.svg)](https://github.com/hyper-crazy/zero_cost_streamer/releases)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-lightgrey.svg)](#)
 
-**Zero Stream** is a high-performance, modern streaming platform. The v2.1.0 update introduces **Native Windows Support** and a specialized **Hybrid Content Engine**, making it a truly cross-platform entertainment suite.
+**Zero Stream** is a high-performance, modern streaming aggregator. The v2.2.0 update focuses on surgical search precision, a revolutionary Windows playback experience, and refined mobile player ergonomics.
 
 ---
 
-## 🚀 What's New in v2.1.0 (The Desktop & Stability Update)
-In this version, we've broken the boundary of mobile-only streaming:
+## 🚀 What's New in v2.2.0
+This version bridges the gap between massive database access and user-friendly interaction:
 
-* **🖥️ Windows Desktop Support:** Fully optimized Windows client with tailored UI and native Edge WebView2 integration.
-* **🛡️ Stealth Ad-Blocker:** Advanced JavaScript injection engine that suppresses pop-ups, overlays, and anti-debugging scripts from streaming providers.
-* **⚡ Hybrid Player Logic:** * **Android:** Uses high-performance `webview_flutter` with landscape auto-rotation.
-    * **Windows:** Uses `flutter_inappwebview` with specialized pointer-event handling for mouse interaction.
-* **🔗 Dynamic Trailer Engine:** One-tap YouTube trailers. Built-in player for Mobile and external browser-link support for Windows.
-* **📊 Enhanced Metadata:** Added **Vote Count** and real-time rating updates directly on the content details screen.
+* **🖥️ Windows Browser Hub (Exclusive):** For TV Series on Windows, the app now generates a localized **Smart Hub (HTML5)** that opens in your default browser. Navigate seasons and episodes with a professional sidebar UI while keeping the app lightweight.
+* **🔍 Ultra-Precise Search Engine:** * **Word-by-Word Sync:** Search results now prioritize strict word-matching and prefix-matching logic.
+    * **Full Database Integration:** Advanced filters (Year, Genre, Rating) now work seamlessly across the entire TMDB database.
+* **📱 Refined Mobile Player:**
+    * **Ergonomic Controls:** Next/Prev episode buttons relocated and resized for easier landscape reach.
+    * **Smart UI Toggle:** Implemented an auto-hide overlay that appears/disappears with a single tap in the top-safe area.
+    * **Logical Metadata:** Dynamic player titles showing `Title (Year)` for movies and `Title (S# E#)` for series.
+* **🛡️ Enhanced Stealth Ad-Blocker:** Optimized JavaScript injection to suppress the latest pop-up variants from streaming providers.
+* **🏷️ Live Filtering Chips:** Added active chips for Filters and Sorting, allowing users to reset their search state with one tap.
 
 ---
 
 ## ✨ Core Features
 * **Intelligent Discovery:** Explore trending content with a dynamic "Watermorphic" sliding hero section.
-* **Advance Search Engine:** Filter content by **Media Type**, **Release Year (1900–2026)**, and **Multi-Genre** selection.
-* **⚖️ IMDb Weighted Sorting:** Sort results by Latest Release, Rating (High to Low), or Alphabetical Order.
+* **Advance Search Logic:** Multi-layered filtering by **Media Type**, **Release Year (1900–2026)**, and **Genre**.
+* **⚖️ IMDb Weighted Sorting:** Sort by Latest Release, High/Low Rating, or Alphabetical Order.
 * **Performance First:** Zero-lag UI transitions using optimized Provider state management and lazy-loaded image caching.
 
 ---
 
 ## 📸 Screenshots
-*(Screenshots coming soon for v2.1.0)*
+> **⚠️ Note:** Screenshots are coming soon!
 
-| Home Screen | Advance Search | Episode Selection |
-| :---: | :---: | :---: |
-| <img src="assets/images/Home%20Screen.jpg" width="200" alt="Home Screen" /> | <img src="assets/images/Content%20Details.jpg" width="200" alt="Content Details" /> | <img src="assets/images/Episode%20Selection.jpg" width="200" alt="Episode Selection" /> |
 
 ---
 
@@ -59,9 +59,8 @@ In this version, we've broken the boundary of mobile-only streaming:
 ## 🛠 Tech Stack
 * **Framework:** Flutter (Material 3)
 * **State Management:** Provider
-* **WebView Engines:** Webview Flutter (Mobile) & InAppWebView (Windows)
+* **WebView Engines:** Webview Flutter (Mobile) & Native Browser Hub (Windows)
 * **Networking:** HTTP & Connectivity Plus
-* **Branding:** Google Fonts (Montserrat & Lato)
 
 ---
 
@@ -76,4 +75,4 @@ In this version, we've broken the boundary of mobile-only streaming:
 
 ---
 
-> **Note:** Zero Stream v2.1.0 is part of an ongoing experiment in high-performance cross-platform UI. Feel free to fork and contribute!
+> **Note:** Zero Stream v2.2.0 is an ongoing experiment in high-performance cross-platform UI. Feel free to fork and contribute!

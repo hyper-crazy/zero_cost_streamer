@@ -48,6 +48,7 @@ class _SeasonSelectionScreenState extends State<SeasonSelectionScreen> {
     });
   }
 
+  // Season Picker Bottom Sheet with Blur Effect
   void _showSeasonPicker() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     const Color tmdbSecondary = Color(0xFF01B4E4);
@@ -82,8 +83,6 @@ class _SeasonSelectionScreenState extends State<SeasonSelectionScreen> {
                     final s = seasons[index];
                     final int sNum = s['season_number'];
                     final bool isSelected = selectedSeason == sNum;
-                    final Color activeColor = isDark ? tmdbSecondary : tmdbTertiary;
-                    final Color inactiveColor = isDark ? Colors.white60 : tmdbPrimaryDark.withOpacity(0.6);
 
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -93,10 +92,10 @@ class _SeasonSelectionScreenState extends State<SeasonSelectionScreen> {
                           style: GoogleFonts.montserrat(
                               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
                               fontSize: 18,
-                              color: isSelected ? activeColor : inactiveColor
+                              color: isSelected ? (isDark ? tmdbSecondary : tmdbTertiary) : (isDark ? Colors.white60 : tmdbPrimaryDark.withOpacity(0.6))
                           )
                       ),
-                      tileColor: isSelected ? activeColor.withOpacity(0.1) : Colors.transparent,
+                      tileColor: isSelected ? (isDark ? tmdbSecondary : tmdbTertiary).withOpacity(0.1) : Colors.transparent,
                       onTap: () {
                         setState(() { selectedSeason = sNum; _loadEpisodes(sNum); });
                         Navigator.pop(context);
@@ -135,36 +134,21 @@ class _SeasonSelectionScreenState extends State<SeasonSelectionScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          // --- CLEAN MINIMAL BACK BUTTON ---
           leading: IconButton(
             icon: Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Colors.white,
-                size: 22,
-                shadows: [
-                  Shadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 2)),
-                ],
-              ),
+              decoration: const BoxDecoration(color: Colors.black26, shape: BoxShape.circle),
+              child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
             ),
             onPressed: () => Navigator.pop(context),
           ),
-          title: Text(
-              widget.content.title,
-              style: GoogleFonts.montserrat(fontWeight: FontWeight.w900, fontSize: 18, color: textColor)
-          ),
+          title: Text(widget.content.title, style: GoogleFonts.montserrat(fontWeight: FontWeight.w900, fontSize: 18, color: textColor)),
           centerTitle: true,
         ),
         body: Stack(
           children: [
             Positioned.fill(child: CachedNetworkImage(imageUrl: widget.content.fullPosterUrl, fit: BoxFit.cover)),
-            Positioned.fill(child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), child: const SizedBox.expand())),
-            Positioned.fill(child: Container(color: tintLayerColor.withOpacity(0.75))),
+            Positioned.fill(child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), child: Container(color: tintLayerColor.withOpacity(0.75)))),
 
             isLoading
                 ? Center(child: CircularProgressIndicator(color: iconAccentColor))
@@ -206,24 +190,20 @@ class _SeasonSelectionScreenState extends State<SeasonSelectionScreen> {
               },
             ),
 
+            // Bottom Season Switcher
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: ClipRRect(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                   child: Container(
-                    padding: EdgeInsets.only(
-                      left: 20, right: 20, top: 20,
-                      bottom: MediaQuery.of(context).padding.bottom + 15,
-                    ),
-                    color: Colors.transparent,
+                    padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).padding.bottom + 15),
                     child: ElevatedButton(
                       onPressed: _showSeasonPicker,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: iconAccentColor,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        elevation: 0,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,

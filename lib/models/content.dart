@@ -24,12 +24,11 @@ class Content {
   });
 
   factory Content.fromJson(Map<String, dynamic> json) {
-    // Handling different date keys for Movies vs TV Shows
+    // Extract year from release_date (Movie) or first_air_date (TV)
     String rawDate = json['release_date'] ?? json['first_air_date'] ?? '';
     String parsedYear = rawDate.length >= 4 ? rawDate.substring(0, 4) : 'N/A';
 
-    // TMDB Trending/Discover logic fix:
-    // Title thakle Movie, Name thakle TV Show. Default fallback to movie.
+    // Determine media type based on available keys or explicit media_type field
     String determinedType = json['media_type'] ?? (json['title'] != null ? 'movie' : 'tv');
 
     return Content(
@@ -46,6 +45,7 @@ class Content {
     );
   }
 
+  // TMDB Image URL helpers
   String get fullPosterUrl => 'https://image.tmdb.org/t/p/w500$posterPath';
   String get fullBackdropUrl => 'https://image.tmdb.org/t/p/w1280$backdropPath';
 }

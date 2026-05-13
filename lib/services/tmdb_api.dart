@@ -4,10 +4,20 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/content.dart';
 
 class TmdbApi {
+  // TMDB API credentials and configuration
   final String apiKey = dotenv.env['TMDB_API_KEY'] ?? '';
   final String baseUrl = 'https://api.themoviedb.org/3';
 
-  // Fetch trending movies and TV shows for the home slider
+  // Fetch full details of a specific movie or TV show
+  Future<Map<String, dynamic>> getDetails(int id, String type) async {
+    final response = await http.get(Uri.parse('$baseUrl/$type/$id?api_key=$apiKey'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    }
+    throw Exception('Failed to load details');
+  }
+
+  // Get trending content for the home screen
   Future<List<Content>> getTrending({int page = 1}) async {
     final response = await http.get(Uri.parse('$baseUrl/trending/all/day?api_key=$apiKey&page=$page'));
     if (response.statusCode == 200) {
@@ -17,7 +27,7 @@ class TmdbApi {
     throw Exception('Failed trending');
   }
 
-  // Fetch content based on filters, genres, or categories (Discover)
+  // Discover content based on filters like genre, year, and rating
   Future<List<Content>> getDiscoverContent(
       int? genreId, {
         int page = 1,
@@ -31,7 +41,7 @@ class TmdbApi {
       }) async {
     String urlType = (type == 'all') ? 'movie' : type;
 
-    // Handle cross-platform sorting keys between Movies and TV Shows
+    // Handle air date vs release date sorting
     String finalSort = sortBy;
     if (sortBy.contains('primary_release_date')) {
       finalSort = (urlType == 'movie') ? sortBy : sortBy.replaceAll('primary_release_date', 'first_air_date');
@@ -53,7 +63,7 @@ class TmdbApi {
     throw Exception('Failed discover');
   }
 
-  // Multi-search functionality for both movies and TV shows
+  // Search across multiple content types (Movies and TV)
   Future<List<Content>> searchContent(String query, {int page = 1}) async {
     final response = await http.get(Uri.parse('$baseUrl/search/multi?api_key=$apiKey&query=${Uri.encodeComponent(query)}&page=$page'));
     if (response.statusCode == 200) {
@@ -63,7 +73,7 @@ class TmdbApi {
     throw Exception('Search failed');
   }
 
-  // Retrieve genre names and IDs
+  // Fetch available genres for Movies or TV shows
   Future<Map<int, String>> getGenreList(String type) async {
     String urlType = (type == 'all') ? 'movie' : type;
     final response = await http.get(Uri.parse('$baseUrl/genre/$urlType/list?api_key=$apiKey'));
@@ -74,34 +84,31 @@ class TmdbApi {
     return {};
   }
 
-  // TV Show specific: Fetch season metadata
+  // Retrieve season data for a TV show
   Future<List<dynamic>> getSeasons(int id) async {
     final response = await http.get(Uri.parse('$baseUrl/tv/$id?api_key=$apiKey'));
     return (response.statusCode == 200) ? json.decode(response.body)['seasons'] ?? [] : [];
   }
 
-  // TV Show specific: Fetch episodes for a given season
+  // Retrieve episode list for a specific season
   Future<List<dynamic>> getEpisodes(int id, int seasonNum) async {
     final response = await http.get(Uri.parse('$baseUrl/tv/$id/season/$seasonNum?api_key=$apiKey'));
     return (response.statusCode == 200) ? json.decode(response.body)['episodes'] ?? [] : [];
   }
 
-  // Fetch YouTube video keys for trailers
+  // Fetch YouTube video key for trailers
   Future<String?> getYoutubeKey(int id, String type) async {
     final response = await http.get(Uri.parse('$baseUrl/$type/$id/videos?api_key=$apiKey'));
     if (response.statusCode == 200) {
       List results = json.decode(response.body)['results'];
       if (results.isNotEmpty) {
         try {
-          // Prioritize official YouTube trailers
           final trailer = results.firstWhere(
                 (v) => v['site'] == 'YouTube' && v['type'] == 'Trailer',
             orElse: () => results[0],
           );
           return trailer['key'];
-        } catch (e) {
-          return null;
-        }
+        } catch (e) { return null; }
       }
     }
     return null;

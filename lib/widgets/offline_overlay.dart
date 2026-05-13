@@ -14,15 +14,19 @@ class OfflineOverlay extends StatefulWidget {
 class _OfflineOverlayState extends State<OfflineOverlay> {
   bool _isChecking = false;
 
+  // Handle connection retry logic
   Future<void> _handleRetry() async {
     setState(() => _isChecking = true);
+
+    // Artificial delay for better UX
     await Future.delayed(const Duration(seconds: 1));
 
     final results = await Connectivity().checkConnectivity();
-    final hasNet = !results.contains(ConnectivityResult.none);
+    final hasConnection = !results.contains(ConnectivityResult.none);
 
-    if (hasNet) {
+    if (hasConnection) {
       if (mounted) {
+        // Refresh home content if internet is restored
         Provider.of<ContentProvider>(context, listen: false).refreshHome();
       }
     } else {
@@ -40,11 +44,10 @@ class _OfflineOverlayState extends State<OfflineOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    // Dynamic styling based on main.dart themes
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = Theme.of(context).scaffoldBackgroundColor;
     final textColor = isDark ? Colors.white : const Color(0xFF0D253F);
-    final primaryColor = Theme.of(context).colorScheme.primary; // Automatic Blue or Green
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Material(
       color: bgColor,
@@ -54,12 +57,15 @@ class _OfflineOverlayState extends State<OfflineOverlay> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Offline Icon
               Icon(
                   Icons.wifi_off_rounded,
                   size: 100,
-                  color: textColor.withOpacity(0.2)
+                  color: textColor.withOpacity(0.1)
               ),
               const SizedBox(height: 24),
+
+              // Error Messages
               Text(
                 'No Connection',
                 style: GoogleFonts.montserrat(
@@ -78,8 +84,10 @@ class _OfflineOverlayState extends State<OfflineOverlay> {
                   height: 1.5,
                 ),
               ),
+
               const SizedBox(height: 40),
 
+              // Action Button or Loading Indicator
               _isChecking
                   ? Column(
                 children: [

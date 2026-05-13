@@ -6,16 +6,19 @@ import '../services/tmdb_api.dart';
 
 class ContentProvider with ChangeNotifier {
   final TmdbApi _api = TmdbApi();
+
+  // Data Caching & Pagination
   final Map<String, List<Content>> _cacheGridData = {};
   final Map<String, int> _pageTracker = {};
   List<Content> _sliderContent = [];
+
+  // State Management
   bool _isLoading = false;
   bool _isFetchingNextPage = false;
   String _currentFilter = 'All';
-
-  // Manual Offline State
   bool _isOffline = false;
 
+  // Getters
   List<Content> get gridContent => _cacheGridData[_currentFilter] ?? [];
   List<Content> get sliderContent => _sliderContent;
   bool get isLoading => _isLoading;
@@ -27,18 +30,19 @@ class ContentProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // IMDB Weighted Rating Calculation for "Top Rated" sorting
   double _calculateWeightedScore(Content content, int minVotes) {
     double v = content.voteCount.toDouble();
     double m = minVotes.toDouble();
     double R = content.rating;
-    double C = 7.0;
+    double C = 7.0; // Average rating base
 
     if (v < m) return R * (v / m);
     return (v / (v + m) * R) + (m / (v + m) * C);
   }
 
+  // Initial Home Content Load
   Future<void> initHome() async {
-    // Connection Check before fetching
     final results = await Connectivity().checkConnectivity();
     if (results.contains(ConnectivityResult.none)) {
       _isOffline = true;
@@ -47,15 +51,19 @@ class ContentProvider with ChangeNotifier {
     }
 
     if (_sliderContent.isNotEmpty) return;
+
     _isLoading = true;
     notifyListeners();
+
     try {
       _sliderContent = await _api.getTrending(page: 1);
       await fetchContent(filter: 'All');
+      _isOffline = false;
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Init Error: $e");
       _isOffline = true;
     }
+
     _isLoading = false;
     notifyListeners();
   }
@@ -67,10 +75,10 @@ class ContentProvider with ChangeNotifier {
     await initHome();
   }
 
+  // Dynamic Content Fetching based on Filters
   Future<void> fetchContent({required String filter, bool isLoadMore = false}) async {
     _currentFilter = filter;
 
-    // Check connection
     final results = await Connectivity().checkConnectivity();
     if (results.contains(ConnectivityResult.none)) {
       _isOffline = true;
@@ -101,7 +109,8 @@ class ContentProvider with ChangeNotifier {
         List<Content> popTV = await _api.getDiscoverContent(null, type: 'tv', sortBy: 'popularity.desc', page: page);
         data = [...popMovies, ...popTV];
         data.sort((a, b) => b.voteCount.compareTo(a.voteCount));
-      } else if (filter == 'Top Rated') {
+      }
+      else if (filter == 'Top Rated') {
         List<Content> topMovies = await _api.getDiscoverContent(null, type: 'movie', sortBy: 'vote_average.desc', page: page, minVoteCount: 500);
         List<Content> topTV = await _api.getDiscoverContent(null, type: 'tv', sortBy: 'vote_average.desc', page: page, minVoteCount: 300);
         data = [...topMovies, ...topTV];
@@ -109,12 +118,14 @@ class ContentProvider with ChangeNotifier {
           int m = (a.mediaType == 'movie') ? 1000 : 500;
           return _calculateWeightedScore(b, m).compareTo(_calculateWeightedScore(a, m));
         });
-      } else {
+      }
+      else {
         List<Content> latest = [];
         if (filter == 'Movies') latest = await _api.getDiscoverContent(null, type: 'movie', page: page);
         else if (filter == 'TV Shows') latest = await _api.getDiscoverContent(null, type: 'tv', page: page);
         else latest = await _api.getTrending(page: page);
 
+        // Mix random discovery data for a fresh feel
         int randomPageNum = Random().nextInt(50) + 1;
         String randomType = (filter == 'TV Shows') ? 'tv' : 'movie';
         if (filter == 'All') randomType = Random().nextBool() ? 'movie' : 'tv';

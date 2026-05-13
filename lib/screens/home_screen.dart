@@ -38,20 +38,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       if (status == AnimationStatus.completed) _slideNext();
     });
 
-    // Connectivity Listener: Status Trigger & Slider Control
+    // Auto-resume slider on connectivity change
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
       final hasNet = !results.contains(ConnectivityResult.none);
       final provider = Provider.of<ContentProvider>(context, listen: false);
 
       if (!hasNet) {
         provider.setOfflineStatus(true);
-        _progressController.stop(); // Stop slider on disconnect
+        _progressController.stop();
       } else {
-        // Eikhane manual resume trigger logic
-        // Jodi user retry kore online hoy, provider.isOffline false hobe
-        if (!provider.isOffline && !_progressController.isAnimating) {
-          _progressController.forward();
-        }
+        if (!provider.isOffline && !_progressController.isAnimating) _progressController.forward();
       }
     });
 
@@ -102,14 +98,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final primaryColor = Theme.of(context).colorScheme.primary;
     final textColor = isDark ? Colors.white : const Color(0xFF0D253F);
 
-    // FIX: Re-trigger slider if data finally arrives after reconnect
-    if (!provider.isOffline &&
-        provider.sliderContent.isNotEmpty &&
-        !_progressController.isAnimating &&
-        !_isAutoSliding) {
-      _progressController.forward();
-    }
-
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
@@ -138,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 )
             ),
 
-            // --- TRENDING SLIDER ---
+            // Trending Slider Section
             SliverToBoxAdapter(
               child: Column(children: [
                 SizedBox(
@@ -159,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: Stack(fit: StackFit.expand, children: [
-                                  CachedNetworkImage(imageUrl: content.fullBackdropUrl, fit: BoxFit.cover, placeholder: (context, url) => Container(color: Colors.black12)),
+                                  CachedNetworkImage(imageUrl: content.fullBackdropUrl, fit: BoxFit.cover),
                                   DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withOpacity(0.95)]))),
                                   Positioned(bottom: 15, left: 15, right: 85, child: Text("${content.title} (${content.releaseYear})", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis)),
                                   Positioned(bottom: 15, right: 15, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: primaryColor.withOpacity(0.85), borderRadius: BorderRadius.circular(8)), child: Text(content.mediaType.toUpperCase(), style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)))),
@@ -188,17 +176,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ]),
             ),
 
-            // --- STICKY COMPACT PILL CHIPS ---
+            // Sticky Filter Chips
             SliverPersistentHeader(
               pinned: true,
               delegate: _StickyChipDelegate(
                 height: 68,
                 child: Container(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     itemCount: filters.length,
                     itemBuilder: (context, index) {
                       bool isSelected = selectedFilter == filters[index];
@@ -209,34 +196,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             setState(() => selectedFilter = filters[index]);
                             provider.fetchContent(filter: filters[index]);
                           },
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(100),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? primaryColor
-                                      : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)),
-                                  borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(
-                                    color: isSelected ? primaryColor : Colors.white.withOpacity(0.1),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  filters[index],
-                                  style: GoogleFonts.montserrat(
-                                    color: isSelected ? Colors.black : textColor,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSelected ? primaryColor : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)),
+                              borderRadius: BorderRadius.circular(100),
+                              border: Border.all(color: isSelected ? primaryColor : Colors.white.withOpacity(0.1)),
                             ),
+                            child: Text(filters[index], style: GoogleFonts.montserrat(color: isSelected ? Colors.black : textColor, fontWeight: FontWeight.bold, fontSize: 13)),
                           ),
                         ),
                       );
@@ -246,17 +215,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
 
-            // --- GRID CONTENT ---
+            // Main Grid View
             SliverPadding(
               padding: const EdgeInsets.all(16),
               sliver: provider.isLoading
                   ? const SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: CircularProgressIndicator())))
                   : SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.62,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16
+                    crossAxisCount: 2, childAspectRatio: 0.62, crossAxisSpacing: 16, mainAxisSpacing: 16
                 ),
                 delegate: SliverChildBuilderDelegate(
                         (context, index) => ContentCard(content: provider.gridContent[index]),
@@ -278,9 +244,8 @@ class _StickyChipDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final double height;
   _StickyChipDelegate({required this.child, required this.height});
-
   @override double get minExtent => height;
   @override double get maxExtent => height;
-  @override Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => child;
-  @override bool shouldRebuild(covariant _StickyChipDelegate oldDelegate) => true;
+  @override Widget build(context, shrink, overlaps) => child;
+  @override bool shouldRebuild(covariant _StickyChipDelegate old) => true;
 }

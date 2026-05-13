@@ -20,8 +20,8 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
     _animateLoading();
   }
 
+  // Smooth loading animation for 3 seconds
   void _animateLoading() {
-    // 3 second loading logic
     const duration = Duration(milliseconds: 3000);
     const interval = Duration(milliseconds: 30);
     int steps = duration.inMilliseconds ~/ interval.inMilliseconds;
@@ -61,17 +61,14 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
-        alignment: Alignment.center, // FIXED: Corrected alignment logic
+        alignment: Alignment.center,
         children: [
-          // Middle: Branding & Loading
+          // Branding Section
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  'assets/images/zs_logo_transparent bg.png',
-                  width: 130,
-                ),
+                Image.asset('assets/images/zs_logo_transparent bg.png', width: 130),
                 const SizedBox(height: 24),
                 Text(
                   'Zero Stream',
@@ -83,7 +80,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Premium Slim Progress Bar
+                // Progress Bar
                 Container(
                   width: 220,
                   height: 4,
@@ -101,7 +98,8 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
               ],
             ),
           ),
-          // Bottom: TMDB Credit
+
+          // TMDB Attribution
           Positioned(
             bottom: 50,
             child: Column(
@@ -118,8 +116,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
                 SvgPicture.asset(
                   'assets/images/TMDB_attribution.svg',
                   width: 90,
-                  // ignore: deprecated_member_use
-                  color: textColor.withOpacity(0.7),
+                  colorFilter: ColorFilter.mode(textColor.withOpacity(0.7), BlendMode.srcIn),
                 ),
               ],
             ),
