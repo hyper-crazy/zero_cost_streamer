@@ -1,7 +1,7 @@
 class AppConstants {
   // API and Streaming Base URLs
   static const String tmdbBaseUrl = 'https://api.themoviedb.org/3';
-  static const String vidsrcBaseUrl = 'https://vidsrc.icu';
+  static const String vidsrcBaseUrl = 'https://vsembed.ru/';
   static const String imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
 
   // TMDB API Key for fetching data (Series/Seasons/Episodes)
