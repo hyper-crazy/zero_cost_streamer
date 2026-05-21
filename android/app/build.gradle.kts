@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -11,6 +11,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -24,14 +25,13 @@ android {
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionName = "${flutter.versionName} (${flutter.versionCode})"
     }
 
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
 
-            // APK Name Change Logic
             applicationVariants.all {
                 val variant = this
                 variant.outputs.all {
@@ -39,7 +39,6 @@ android {
                     val project = "Zero_Stream"
                     val version = variant.versionName
 
-                    // Direct name assign kora
                     output.outputFileName = "$project v$version.apk"
                 }
             }
@@ -49,4 +48,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

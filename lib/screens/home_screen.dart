@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/content_provider.dart';
+import '../services/update_service.dart';
 import '../widgets/content_card.dart';
 import 'details_screen.dart';
 import 'search_screen.dart';
@@ -31,6 +32,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+
+    //Check app version
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await UpdateService().checkUpdate(context);
+    });
+
     _pageController = PageController(viewportFraction: 0.9, initialPage: _currentTrendingPage);
     _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
 

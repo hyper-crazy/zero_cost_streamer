@@ -1,39 +1,35 @@
-# 🎬 Zero Stream - v2.2.0
+# 🎬 Zero Stream - v2.3.0
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.11.4-blue.svg)](https://flutter.dev)
-[![Version](https://img.shields.io/badge/Version-2.2.0-green.svg)](https://github.com/hyper-crazy/zero_cost_streamer/releases)
+[![Version](https://img.shields.io/badge/Version-2.3.0-green.svg)](https://github.com/hyper-crazy/zero_cost_streamer/releases)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows-lightgrey.svg)](#)
 
-**Zero Stream** is a high-performance, modern streaming aggregator. The v2.2.0 update focuses on surgical search precision, a revolutionary Windows playback experience, and refined mobile player ergonomics.
+**Zero Stream** is a high-performance, modern streaming aggregator. The v2.3.0 update introduces a seamless OTA (Over-The-Air) in-app update experience, alongside surgical search precision and refined player ergonomics.
 
 ---
 
-## 🚀 What's New in v2.2.0
-This version bridges the gap between massive database access and user-friendly interaction:
+## 🚀 What's New in v2.3.0
+This major release ensures you never miss a new feature or bug fix:
 
-* **🖥️ Windows Browser Hub (Exclusive):** For TV Series on Windows, the app now generates a localized **Smart Hub (HTML5)** that opens in your default browser. Navigate seasons and episodes with a professional sidebar UI while keeping the app lightweight.
-* **🔍 Ultra-Precise Search Engine:** * **Word-by-Word Sync:** Search results now prioritize strict word-matching and prefix-matching logic.
-    * **Full Database Integration:** Advanced filters (Year, Genre, Rating) now work seamlessly across the entire TMDB database.
-* **📱 Refined Mobile Player:**
-    * **Ergonomic Controls:** Next/Prev episode buttons relocated and resized for easier landscape reach.
-    * **Smart UI Toggle:** Implemented an auto-hide overlay that appears/disappears with a single tap in the top-safe area.
-    * **Logical Metadata:** Dynamic player titles showing `Title (Year)` for movies and `Title (S# E#)` for series.
-* **🛡️ Enhanced Stealth Ad-Blocker:** Optimized JavaScript injection to suppress the latest pop-up variants from streaming providers.
-* **🏷️ Live Filtering Chips:** Added active chips for Filters and Sorting, allowing users to reset their search state with one tap.
+* **🔄 Seamless In-App Auto Updates:** No need to check GitHub manually anymore. The app now automatically detects new versions via Firebase, downloads the latest release securely in the background, and prompts the native Android package installer—all without leaving the app.
+* **⚡ Background Downloader:** Built with robust internal storage management to safely download and initialize updates without crashing or triggering aggressive system kills.
+
+*(Previous highlights from v2.2.0 including the Windows Browser Hub, Ultra-Precise Search Engine, and Stealth Ad-Blocker are now fully stabilized in this build).*
 
 ---
 
 ## ✨ Core Features
 * **Intelligent Discovery:** Explore trending content with a dynamic "Watermorphic" sliding hero section.
-* **Advance Search Logic:** Multi-layered filtering by **Media Type**, **Release Year (1900–2026)**, and **Genre**.
-* **⚖️ IMDb Weighted Sorting:** Sort by Latest Release, High/Low Rating, or Alphabetical Order.
+* **Advance Search Logic:** Multi-layered filtering by **Media Type**, **Release Year (1900–2026)**, and **Genre** with strict word-matching.
+* **🖥️ Windows Browser Hub:** For TV Series on Windows, the app generates a localized Smart Hub (HTML5) that opens in your default browser.
+* **📱 Smart Mobile Player:** Ergonomic controls, auto-hide overlays, and dynamic logical metadata titles.
+* **⚖️ IMDb Weighted Sorting:** Sort by Latest Release, High/Low Rating, or Alphabetical Order with live filtering chips.
 * **Performance First:** Zero-lag UI transitions using optimized Provider state management and lazy-loaded image caching.
 
 ---
 
 ## 📸 Screenshots
 > **⚠️ Note:** Screenshots are coming soon!
-
 
 ---
 
@@ -42,10 +38,11 @@ This version bridges the gap between massive database access and user-friendly i
     ```bash
     git clone [https://github.com/hyper-crazy/zero_cost_streamer.git](https://github.com/hyper-crazy/zero_cost_streamer.git)
     ```
-2.  **Environment Configuration:** Create a `.env` file in the root:
-    ```env
-    TMDB_API_KEY=your_api_key_here
-    ```
+2.  **Environment & Firebase Configuration:** * Create a `.env` file in the root:
+      ```env
+      TMDB_API_KEY=your_api_key_here
+      ```
+    * Ensure your `google-services.json` is placed in `android/app/` for the update service to connect to Firebase Realtime Database.
 3.  **Get Dependencies:**
     ```bash
     flutter pub get
@@ -59,6 +56,7 @@ This version bridges the gap between massive database access and user-friendly i
 ## 🛠 Tech Stack
 * **Framework:** Flutter (Material 3)
 * **State Management:** Provider
+* **Cloud & Updates:** Firebase Realtime Database, Dio, Open Filex
 * **WebView Engines:** Webview Flutter (Mobile) & Native Browser Hub (Windows)
 * **Networking:** HTTP & Connectivity Plus
 
@@ -75,4 +73,4 @@ This version bridges the gap between massive database access and user-friendly i
 
 ---
 
-> **Note:** Zero Stream v2.2.0 is an ongoing experiment in high-performance cross-platform UI. Feel free to fork and contribute!
+> **Note:** Zero Stream v2.3.0 is an ongoing experiment in high-performance cross-platform UI. Feel free to fork and contribute!

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'providers/content_provider.dart';
 import 'screens/splash_screen.dart';
@@ -11,12 +13,15 @@ import 'widgets/offline_overlay.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables from .env file
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
     debugPrint("Environment file error: $e");
   }
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(const MyApp());
 }
@@ -26,7 +31,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TMDB Official Palette
     const tmdbTertiaryGreen = Color(0xFF90CEA1);
     const tmdbSecondaryBlue = Color(0xFF01B4E4);
     const tmdbDeepNavy = Color(0xFF0D253F);
@@ -39,9 +43,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Zero Stream',
         debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.system, // Auto-switch based on system settings
-
-        // Premium Dark Theme (TMDB Navy Style)
+        themeMode: ThemeMode.system,
         darkTheme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
@@ -53,8 +55,6 @@ class MyApp extends StatelessWidget {
           ),
           textTheme: GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme),
         ),
-
-        // Elegant Light Theme
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.light,
@@ -66,10 +66,7 @@ class MyApp extends StatelessWidget {
           ),
           textTheme: GoogleFonts.montserratTextTheme(ThemeData.light().textTheme),
         ),
-
         home: const AnimatedSplashScreen(),
-
-        // Global Builder to handle Offline Overlay
         builder: (context, child) {
           final provider = Provider.of<ContentProvider>(context);
           return Stack(
