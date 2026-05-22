@@ -33,7 +33,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
 
-    //Check app version
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await UpdateService().checkUpdate(context);
     });
@@ -41,14 +40,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _pageController = PageController(viewportFraction: 0.9, initialPage: _currentTrendingPage);
     _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
 
-    // Timer status listener
     _progressController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _slideNext();
       }
     });
 
-    // Connectivity listener: ONLY updates UI status, DOES NOT stop the slider
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
       final hasNet = !results.contains(ConnectivityResult.none);
       final provider = Provider.of<ContentProvider>(context, listen: false);
@@ -56,7 +53,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       if (!hasNet) {
         provider.setOfflineStatus(true);
       }
-      // Slider never stops here, regardless of connection
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -74,7 +70,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     });
   }
 
-  // Automatic slide logic: Always runs if clients exist
   void _slideNext() {
     if (!_pageController.hasClients) return;
 
@@ -88,11 +83,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       if (!mounted) return;
       _isAutoSliding = false;
       _progressController.reset();
-      _progressController.forward(); // Always restart timer
+      _progressController.forward();
     });
   }
 
-  // Manual reconnect logic from Try Again button
+  // --- FIXED REFRESH LOGIC ---
   Future<void> _manualReconnect() async {
     final provider = Provider.of<ContentProvider>(context, listen: false);
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -104,9 +99,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
 
     provider.setOfflineStatus(false);
-    await provider.refreshHome();
 
-    // Slider is already moving, so no need to kickstart it here!
+    // Refresh korar somoy 'All' chip select kore deya hobe
+    setState(() {
+      selectedFilter = 'All';
+    });
+
+    await provider.refreshHome();
   }
 
   @override
@@ -147,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               slivers: [
                 SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(20, 10, 20, 10), child: Text('Trending Now', style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.w900, color: textColor)))),
 
-                // --- SLIDER SECTION: ALWAYS ACTIVE ---
                 SliverToBoxAdapter(
                   child: Column(children: [
                     SizedBox(
@@ -200,7 +198,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           ),
 
-          // OFFLINE OVERLAY
           if (provider.isOffline)
             Container(
               color: Colors.black.withOpacity(0.75),
