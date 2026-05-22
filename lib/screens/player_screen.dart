@@ -2,14 +2,15 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/content.dart';
 import '../utils/constants.dart';
 import '../services/tmdb_api.dart';
 import '../services/hub_generator.dart';
+import '../providers/content_provider.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Content content;
@@ -75,6 +76,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
     } else {
       _hideTimer?.cancel();
     }
+  }
+
+  // Back action with auto-update tracker
+  void _onBackPress() {
+    if (widget.season != null) {
+      Provider.of<ContentProvider>(context, listen: false)
+          .updateLastEpisode(widget.content.id, "S${widget.season} E$_currentEpisode");
+    }
+    Navigator.pop(context);
   }
 
   void _showEpisodesBottomSheet() {
@@ -212,7 +222,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ],
               ),
             ),
-            Positioned(top: 30, left: 30, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 28), onPressed: () => Navigator.pop(context))),
+            Positioned(top: 30, left: 30, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 28), onPressed: _onBackPress)),
           ],
         ),
       );
@@ -226,7 +236,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         children: [
           Positioned.fill(child: WebViewWidget(controller: _controller)),
 
-          // Trigger Layer: Shudhu top area te thakbe
           Positioned(
             top: 0, left: 0, right: 0, height: 100,
             child: GestureDetector(
@@ -236,7 +245,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ),
           ),
 
-          // Overlay Layer: Shudhu UI er jonno
           IgnorePointer(
             ignoring: !_showControls,
             child: AnimatedOpacity(
@@ -257,7 +265,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         top: 15, left: 20,
                         child: Row(
                           children: [
-                            _controlCircle(Icons.arrow_back_ios_new, () => Navigator.pop(context), isBack: true),
+                            _controlCircle(Icons.arrow_back_ios_new, _onBackPress, isBack: true),
                             const SizedBox(width: 12),
                             SizedBox(
                               width: MediaQuery.of(context).size.width * 0.5,

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -8,6 +9,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 import '../models/content.dart';
 import '../services/tmdb_api.dart';
 import '../widgets/content_card.dart';
+import '../providers/content_provider.dart';
 import 'player_screen.dart';
 import 'season_selection_screen.dart';
 
@@ -27,7 +29,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
   YoutubePlayerController? _ytController;
   String? _trailerKey;
   bool _isTrailerLoading = true;
-  bool _wasPlayingBeforeScroll = false; // Auto-resume tracker
+  bool _wasPlayingBeforeScroll = false;
 
   @override
   void initState() {
@@ -105,7 +107,12 @@ class _DetailsScreenState extends State<DetailsScreen> {
   }
 
   Widget _buildMainContent(BuildContext context, Widget? player) {
+    final provider = Provider.of<ContentProvider>(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bool isWatching = provider.isWatching(widget.movie.id);
+    final bool isCompleted = provider.isCompleted(widget.movie.id);
+
     const Color tmdbSecondary = Color(0xFF01B4E4);
     const Color tmdbTertiary = Color(0xFF90CEA1);
     const Color tmdbPrimaryDark = Color(0xFF0D253F);
@@ -128,6 +135,26 @@ class _DetailsScreenState extends State<DetailsScreen> {
               ),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: Colors.white),
+                onSelected: (value) {
+                  if (value == 'completed') {
+                    provider.markAsCompleted(widget.movie);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Marked as Completed!")));
+                  } else if (value == 'remove_completed') {
+                    provider.removeFromCompleted(widget.movie);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Removed from Completed!")));
+                  }
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  if (!isCompleted)
+                    const PopupMenuItem<String>(value: 'completed', child: Text('Mark as Completed')),
+                  if (isCompleted)
+                    const PopupMenuItem<String>(value: 'remove_completed', child: Text('Remove from Completed')),
+                ],
+              ),
+            ],
             backgroundColor: isDark ? tmdbPrimaryDark : const Color(0xFFE6E0D4),
             title: Row(
               mainAxisSize: MainAxisSize.min,
@@ -165,7 +192,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       const SizedBox(width: 6),
                       Text(widget.movie.rating.toStringAsFixed(1), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor)),
                       const SizedBox(width: 8),
-                      // --- VOTE COUNT RESTORED ---
                       Text('(${widget.movie.voteCount} votes)', style: TextStyle(color: secondaryTextColor, fontSize: 13)),
                       const SizedBox(width: 12),
                       Text(widget.movie.releaseYear, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
@@ -174,41 +200,75 @@ class _DetailsScreenState extends State<DetailsScreen> {
 
                   const SizedBox(height: 24),
 
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _ytController?.pause();
-                        if (Platform.isWindows) {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(content: widget.movie)));
-                        } else {
-                          if (widget.movie.mediaType == 'tv') {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => SeasonSelectionScreen(content: widget.movie)));
-                          } else {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(content: widget.movie)));
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.play_arrow, size: 28),
-                      label: const Text('WATCH NOW', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: mainButtonColor,
-                        foregroundColor: isDark ? Colors.white : Colors.black87,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 8,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            _ytController?.pause();
+                            provider.addToWatching(widget.movie);
+                            if (Platform.isWindows) {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(content: widget.movie)));
+                            } else {
+                              if (widget.movie.mediaType == 'tv') {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => SeasonSelectionScreen(content: widget.movie)));
+                              } else {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => PlayerScreen(content: widget.movie)));
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.play_arrow, size: 28),
+                          label: Text(isCompleted ? 'REWATCH' : 'WATCH NOW', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: mainButtonColor,
+                            foregroundColor: isDark ? Colors.white : Colors.black87,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: isCompleted ? null : () {
+                            if (isWatching) {
+                              showDialog(context: context, builder: (ctx) => AlertDialog(
+                                title: const Text("Remove from Watching?"),
+                                content: const Text("Do you want to remove this content?"),
+                                actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("No")), TextButton(onPressed: () { provider.removeFromWatching(widget.movie); Navigator.pop(ctx); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Removed from Watching list!"))); }, child: const Text("Yes"))],
+                              ));
+                            } else {
+                              provider.addToWatching(widget.movie);
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Added to Watching list!")));
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: mainButtonColor,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: isCompleted ? Colors.green : mainButtonColor),
+                            ),
+                          ),
+                          child: Icon(
+                              isCompleted ? Icons.check_circle : (isWatching ? Icons.bookmark : Icons.bookmark_add_outlined),
+                              size: 28,
+                              color: isCompleted ? Colors.green : mainButtonColor
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 32),
-
-                  // --- TRAILER SECTION WITH FALLBACK & AUTO-RESUME ---
                   Text('Official Trailer', style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
                   const SizedBox(height: 12),
                   if (_isTrailerLoading)
                     const Center(child: CircularProgressIndicator())
                   else if (_trailerKey == null)
-                  // --- FALLBACK RESTORED ---
                     Container(
                       height: 200, width: double.infinity,
                       decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(16)),
@@ -232,7 +292,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
                       key: Key('trailer-${widget.movie.id}'),
                       onVisibilityChanged: (info) {
                         if (_ytController == null) return;
-                        // --- AUTO RESUME LOGIC RESTORED ---
                         if (info.visibleFraction < 0.2 && _ytController!.value.isPlaying) {
                           _ytController!.pause();
                           _wasPlayingBeforeScroll = true;

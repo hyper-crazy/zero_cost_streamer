@@ -32,7 +32,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await UpdateService().checkUpdate(context);
     });
@@ -41,26 +40,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
 
     _progressController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _slideNext();
-      }
+      if (status == AnimationStatus.completed) _slideNext();
     });
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
       final hasNet = !results.contains(ConnectivityResult.none);
       final provider = Provider.of<ContentProvider>(context, listen: false);
-
-      if (!hasNet) {
-        provider.setOfflineStatus(true);
-      }
+      if (!hasNet) provider.setOfflineStatus(true);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = Provider.of<ContentProvider>(context, listen: false);
       await provider.initHome();
-      if (mounted && provider.sliderContent.isNotEmpty) {
-        _progressController.forward();
-      }
+      if (mounted && provider.sliderContent.isNotEmpty) _progressController.forward();
     });
 
     _scrollController.addListener(() {
@@ -72,14 +64,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _slideNext() {
     if (!_pageController.hasClients) return;
-
     _isAutoSliding = true;
     _currentTrendingPage++;
-    _pageController.animateToPage(
-      _currentTrendingPage,
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeInOutCubic,
-    ).then((_) {
+    _pageController.animateToPage(_currentTrendingPage, duration: const Duration(milliseconds: 1000), curve: Curves.easeInOutCubic).then((_) {
       if (!mounted) return;
       _isAutoSliding = false;
       _progressController.reset();
@@ -87,7 +74,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     });
   }
 
-  // --- FIXED REFRESH LOGIC ---
   Future<void> _manualReconnect() async {
     final provider = Provider.of<ContentProvider>(context, listen: false);
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -97,14 +83,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       provider.setOfflineStatus(true);
       return;
     }
-
     provider.setOfflineStatus(false);
-
-    // Refresh korar somoy 'All' chip select kore deya hobe
-    setState(() {
-      selectedFilter = 'All';
-    });
-
+    setState(() => selectedFilter = 'All');
     await provider.refreshHome();
   }
 
@@ -145,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               controller: _scrollController,
               slivers: [
                 SliverToBoxAdapter(child: Padding(padding: const EdgeInsets.fromLTRB(20, 10, 20, 10), child: Text('Trending Now', style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.w900, color: textColor)))),
-
                 SliverToBoxAdapter(
                   child: Column(children: [
                     SizedBox(
@@ -190,14 +169,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     const SizedBox(height: 16),
                   ]),
                 ),
-
                 SliverPersistentHeader(pinned: true, delegate: _StickyChipDelegate(height: 68, child: Container(color: Theme.of(context).scaffoldBackgroundColor, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), itemCount: filters.length, itemBuilder: (context, index) { final isSelected = selectedFilter == filters[index]; return Padding(padding: const EdgeInsets.only(right: 10), child: GestureDetector(onTap: () { setState(() => selectedFilter = filters[index]); provider.fetchContent(filter: filters[index]); }, child: AnimatedContainer(duration: const Duration(milliseconds: 200), alignment: Alignment.center, padding: const EdgeInsets.symmetric(horizontal: 20), decoration: BoxDecoration(color: isSelected ? primaryColor : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)), borderRadius: BorderRadius.circular(100), border: Border.all(color: isSelected ? primaryColor : Colors.white.withOpacity(0.1))), child: Text(filters[index], style: GoogleFonts.montserrat(color: isSelected ? Colors.black : textColor, fontWeight: FontWeight.bold, fontSize: 13))))); })))),
                 SliverPadding(padding: const EdgeInsets.all(16), sliver: provider.isLoading ? const SliverToBoxAdapter(child: SizedBox(height: 300, child: Center(child: CircularProgressIndicator()))) : SliverGrid(gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 0.62, crossAxisSpacing: 16, mainAxisSpacing: 16), delegate: SliverChildBuilderDelegate((context, index) => ContentCard(content: provider.gridContent[index]), childCount: provider.gridContent.length))),
                 if (provider.isFetchingNextPage) const SliverToBoxAdapter(child: Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))),
               ],
             ),
           ),
-
           if (provider.isOffline)
             Container(
               color: Colors.black.withOpacity(0.75),

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'home_screen.dart';
+import 'main_screen.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -20,7 +20,6 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
     _animateLoading();
   }
 
-  // Smooth loading animation for 3 seconds
   void _animateLoading() {
     const duration = Duration(milliseconds: 3000);
     const interval = Duration(milliseconds: 30);
@@ -44,7 +43,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
   void _navigateToHome() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -63,7 +62,6 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
       body: Stack(
         alignment: Alignment.center,
         children: [
-          // Branding Section
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -80,7 +78,6 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                // Progress Bar
                 Container(
                   width: 220,
                   height: 4,
@@ -98,8 +95,6 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
               ],
             ),
           ),
-
-          // TMDB Attribution
           Positioned(
             bottom: 50,
             child: Column(
