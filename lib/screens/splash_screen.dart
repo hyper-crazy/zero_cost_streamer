@@ -43,7 +43,8 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
   void _navigateToHome() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const MainScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MainScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -66,7 +67,10 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset('assets/images/zs_logo_transparent bg.png', width: 130),
+                Image.asset(
+                  'assets/images/zs_logo_transparent bg.png',
+                  width: 130,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Zero Stream',
@@ -111,7 +115,10 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
                 SvgPicture.asset(
                   'assets/images/TMDB_attribution.svg',
                   width: 90,
-                  colorFilter: ColorFilter.mode(textColor.withOpacity(0.7), BlendMode.srcIn),
+                  colorFilter: ColorFilter.mode(
+                    textColor.withOpacity(0.7),
+                    BlendMode.srcIn,
+                  ),
                 ),
               ],
             ),

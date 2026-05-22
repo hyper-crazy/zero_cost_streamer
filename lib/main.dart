@@ -20,9 +20,7 @@ void main() async {
     debugPrint("Environment file error: $e");
   }
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const MyApp());
 }
@@ -38,9 +36,7 @@ class MyApp extends StatelessWidget {
     const tmdbBeige = Color(0xFFE6E0D4);
 
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ContentProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => ContentProvider())],
       child: MaterialApp(
         title: 'Zero Stream',
         debugShowCheckedModeBanner: false,
@@ -54,7 +50,9 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.dark,
             primary: tmdbSecondaryBlue,
           ),
-          textTheme: GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme),
+          textTheme: GoogleFonts.montserratTextTheme(
+            ThemeData.dark().textTheme,
+          ),
         ),
         theme: ThemeData(
           useMaterial3: true,
@@ -65,7 +63,9 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.light,
             primary: tmdbTertiaryGreen,
           ),
-          textTheme: GoogleFonts.montserratTextTheme(ThemeData.light().textTheme),
+          textTheme: GoogleFonts.montserratTextTheme(
+            ThemeData.light().textTheme,
+          ),
         ),
         home: const AnimatedSplashScreen(),
         builder: (context, child) {

@@ -13,11 +13,14 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 1;
 
   final List<Widget> _pages = [
-    const Scaffold(body: Center(child: Text("User Account", style: TextStyle(color: Colors.white)))),
+    const Scaffold(
+      body: Center(
+        child: Text("User Account", style: TextStyle(color: Colors.white)),
+      ),
+    ),
     const HomeScreen(),
     const ContentTrackScreen(),
   ];
-
 
   @override
   Widget build(BuildContext context) {

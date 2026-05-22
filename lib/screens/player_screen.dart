@@ -81,8 +81,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   // Back action with auto-update tracker
   void _onBackPress() {
     if (widget.season != null) {
-      Provider.of<ContentProvider>(context, listen: false)
-          .updateLastEpisode(widget.content.id, "S${widget.season} E$_currentEpisode");
+      Provider.of<ContentProvider>(context, listen: false).updateLastEpisode(
+        widget.content.id,
+        "S${widget.season} E$_currentEpisode",
+      );
     }
     Navigator.pop(context);
   }
@@ -92,17 +94,36 @@ class _PlayerScreenState extends State<PlayerScreen> {
       context: context,
       backgroundColor: const Color(0xFF121212),
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return DraggableScrollableSheet(
-          expand: false, initialChildSize: 0.6, maxChildSize: 0.9, minChildSize: 0.4,
+          expand: false,
+          initialChildSize: 0.6,
+          maxChildSize: 0.9,
+          minChildSize: 0.4,
           builder: (context, scrollController) {
             return Column(
               children: [
                 const SizedBox(height: 10),
-                Container(width: 40, height: 5, decoration: BoxDecoration(color: Colors.white30, borderRadius: BorderRadius.circular(10))),
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.white30,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
                 const SizedBox(height: 15),
-                Text("Season ${widget.season} Episodes", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(
+                  "Season ${widget.season} Episodes",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 const Divider(color: Colors.white12, thickness: 1),
                 Expanded(
@@ -115,10 +136,32 @@ class _PlayerScreenState extends State<PlayerScreen> {
                       final epTitle = ep['name'];
                       bool isActive = epNum == _currentEpisode;
                       return ListTile(
-                        tileColor: isActive ? Colors.white.withOpacity(0.05) : Colors.transparent,
-                        leading: Text("$epNum", style: TextStyle(color: isActive ? const Color(0xFF01B4E4) : Colors.white54, fontSize: 18, fontWeight: FontWeight.bold)),
-                        title: Text(epTitle, style: TextStyle(color: isActive ? Colors.white : Colors.white70)),
-                        trailing: isActive ? const Icon(Icons.circle, size: 8, color: Color(0xFF01B4E4)) : null,
+                        tileColor: isActive
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.transparent,
+                        leading: Text(
+                          "$epNum",
+                          style: TextStyle(
+                            color: isActive
+                                ? const Color(0xFF01B4E4)
+                                : Colors.white54,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        title: Text(
+                          epTitle,
+                          style: TextStyle(
+                            color: isActive ? Colors.white : Colors.white70,
+                          ),
+                        ),
+                        trailing: isActive
+                            ? const Icon(
+                                Icons.circle,
+                                size: 8,
+                                color: Color(0xFF01B4E4),
+                              )
+                            : null,
                         onTap: () {
                           Navigator.pop(context);
                           if (!isActive) {
@@ -146,9 +189,16 @@ class _PlayerScreenState extends State<PlayerScreen> {
     setState(() => _isBrowserOpened = false);
     await Future.delayed(const Duration(seconds: 1));
     if (widget.content.mediaType == 'movie') {
-      await launchUrl(Uri.parse(videoUrl), mode: LaunchMode.externalApplication);
+      await launchUrl(
+        Uri.parse(videoUrl),
+        mode: LaunchMode.externalApplication,
+      );
     } else {
-      await HubGenerator.generateAndLaunch(widget.content, widget.season, widget.episode);
+      await HubGenerator.generateAndLaunch(
+        widget.content,
+        widget.season,
+        widget.episode,
+      );
     }
     setState(() => _isBrowserOpened = true);
   }
@@ -157,12 +207,17 @@ class _PlayerScreenState extends State<PlayerScreen> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.black)
-      ..setUserAgent("Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36")
+      ..setUserAgent(
+        "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
             final url = request.url.toLowerCase();
-            if (AppConstants.trustedStreamingDomains.any((d) => url.contains(d.toLowerCase()))) return NavigationDecision.navigate;
+            if (AppConstants.trustedStreamingDomains.any(
+              (d) => url.contains(d.toLowerCase()),
+            ))
+              return NavigationDecision.navigate;
             return NavigationDecision.prevent;
           },
           onPageStarted: (s) => setState(() => _isLoading = true),
@@ -183,7 +238,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _setLandscape() {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
@@ -204,31 +262,77 @@ class _PlayerScreenState extends State<PlayerScreen> {
         backgroundColor: Colors.black,
         body: Stack(
           children: [
-            Positioned.fill(child: Image.network(widget.content.fullBackdropUrl, fit: BoxFit.cover)),
-            Positioned.fill(child: Container(color: Colors.black.withOpacity(0.85))),
+            Positioned.fill(
+              child: Image.network(
+                widget.content.fullBackdropUrl,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Positioned.fill(
+              child: Container(color: Colors.black.withOpacity(0.85)),
+            ),
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (!_isBrowserOpened) ...[
-                    const SizedBox(width: 60, height: 60, child: CircularProgressIndicator(color: Color(0xFF01B4E4), strokeWidth: 4)),
+                    const SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF01B4E4),
+                        strokeWidth: 4,
+                      ),
+                    ),
                     const SizedBox(height: 20),
-                    Text("Opening external hub...", style: GoogleFonts.montserrat(color: Colors.white, fontSize: 16)),
+                    Text(
+                      "Opening external hub...",
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
                   ] else ...[
-                    const Icon(Icons.desktop_windows_outlined, size: 80, color: Color(0xFF01B4E4)),
+                    const Icon(
+                      Icons.desktop_windows_outlined,
+                      size: 80,
+                      color: Color(0xFF01B4E4),
+                    ),
                     const SizedBox(height: 20),
-                    Text("Video playing in external browser", style: GoogleFonts.montserrat(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
-                  ]
+                    Text(
+                      "Video playing in external browser",
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            Positioned(top: 30, left: 30, child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 28), onPressed: _onBackPress)),
+            Positioned(
+              top: 30,
+              left: 30,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                onPressed: _onBackPress,
+              ),
+            ),
           ],
         ),
       );
     }
 
-    String displayTitle = widget.content.title + (widget.season != null ? " (S${widget.season} E$_currentEpisode)" : " (${widget.content.releaseYear})");
+    String displayTitle =
+        widget.content.title +
+        (widget.season != null
+            ? " (S${widget.season} E$_currentEpisode)"
+            : " (${widget.content.releaseYear})");
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -237,7 +341,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
           Positioned.fill(child: WebViewWidget(controller: _controller)),
 
           Positioned(
-            top: 0, left: 0, right: 0, height: 100,
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 100,
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: _toggleControls,
@@ -262,22 +369,39 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   child: Stack(
                     children: [
                       Positioned(
-                        top: 15, left: 20,
+                        top: 15,
+                        left: 20,
                         child: Row(
                           children: [
-                            _controlCircle(Icons.arrow_back_ios_new, _onBackPress, isBack: true),
+                            _controlCircle(
+                              Icons.arrow_back_ios_new,
+                              _onBackPress,
+                              isBack: true,
+                            ),
                             const SizedBox(width: 12),
                             SizedBox(
                               width: MediaQuery.of(context).size.width * 0.5,
-                              child: Text(displayTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                displayTitle,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       if (widget.season != null)
                         Positioned(
-                          top: 15, right: 25,
-                          child: _controlCircle(Icons.video_library_rounded, _showEpisodesBottomSheet),
+                          top: 15,
+                          right: 25,
+                          child: _controlCircle(
+                            Icons.video_library_rounded,
+                            _showEpisodesBottomSheet,
+                          ),
                         ),
                     ],
                   ),
@@ -286,18 +410,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ),
           ),
 
-          if (_isLoading) const Center(child: CircularProgressIndicator(color: Color(0xFF01B4E4))),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(color: Color(0xFF01B4E4)),
+            ),
         ],
       ),
     );
   }
 
-  Widget _controlCircle(IconData icon, VoidCallback? onTap, {bool isBack = false}) {
+  Widget _controlCircle(
+    IconData icon,
+    VoidCallback? onTap, {
+    bool isBack = false,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(isBack ? 8 : 9),
-        decoration: BoxDecoration(color: Colors.black.withOpacity(0.15), shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.15),
+          shape: BoxShape.circle,
+        ),
         child: Icon(icon, color: Colors.white, size: isBack ? 22 : 27),
       ),
     );
